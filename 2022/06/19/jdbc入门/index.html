@@ -1,0 +1,293 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>jdbc入门 | robin-blog</title><meta name="author" content="lxbing"><meta name="copyright" content="lxbing"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="1.DriverManager 其实我们今后只需要会用 DriverManager 的getconnection()方法即可:  Class.forName(&quot;com.mysql.jdbc.Driver&quot;)；注册驱动 String url&#x3D;&quot;jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;mydb1&quot; String username &#x3D; &quot;root&quot;; String pass">
+<meta property="og:type" content="article">
+<meta property="og:title" content="jdbc入门">
+<meta property="og:url" content="http://example.com/2022/06/19/jdbc%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="robin-blog">
+<meta property="og:description" content="1.DriverManager 其实我们今后只需要会用 DriverManager 的getconnection()方法即可:  Class.forName(&quot;com.mysql.jdbc.Driver&quot;)；注册驱动 String url&#x3D;&quot;jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;mydb1&quot; String username &#x3D; &quot;root&quot;; String pass">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/image/tx.jpg">
+<meta property="article:published_time" content="2022-06-19T13:44:11.000Z">
+<meta property="article:modified_time" content="2026-03-16T09:44:44.333Z">
+<meta property="article:author" content="lxbing">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/image/tx.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "jdbc入门",
+  "url": "http://example.com/2022/06/19/jdbc%E5%85%A5%E9%97%A8/",
+  "image": "http://example.com/image/tx.jpg",
+  "datePublished": "2022-06-19T13:44:11.000Z",
+  "dateModified": "2026-03-16T09:44:44.333Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "lxbing",
+      "url": "http://example.com"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/2022/06/19/jdbc%E5%85%A5%E9%97%A8/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'jdbc入门',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/image/tx.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/image/miku.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">robin-blog</span></a><a class="nav-page-title" href="/"><span class="site-name">jdbc入门</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">jdbc入门</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-06-19T13:44:11.000Z" title="发表于 2022-06-19 21:44:11">2022-06-19</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-03-16T09:44:44.333Z" title="更新于 2026-03-16 17:44:44">2026-03-16</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>3分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h3 id="drivermanager">1.DriverManager</h3>
+<p>其实我们今后只需要会用 DriverManager
+的<code>getconnection()</code>方法即可:</p>
+<ol type="1">
+<li><p><code>Class.forName("com.mysql.jdbc.Driver")；</code><em>注册驱动</em></p></li>
+<li><p><code>String url="jdbc:mysql://localhost:3306/mydb1"</code></p></li>
+<li><p><code>String username = "root";</code></p></li>
+<li><p><code>String password =“123";</code></p></li>
+<li><p><code>Connection con = DriverManager.getConnection(url username, password);</code></p></li>
+</ol>
+<blockquote>
+<p>注意,上面代码可能出现的两种异常:</p>
+<ol type="1">
+<li>ClassNotFoundException:这个异常是在第 1
+句上出现的，出现这个异常有两个可能:</li>
+</ol>
+<ul>
+<li><p>你没有给出 mysal 的 jar 包;</p></li>
+<li><p>你把类名称打错了，查看类名是不是 com.mysal.idbc.Driver-
+u</p></li>
+</ul>
+<ol start="2" type="1">
+<li>SOLException:这个异常出现在第 5
+句,出现这个异常就是三个参数的问题，往往 username 和 password
+一般不是出错，所以需要认真查看 url 是否打错。</li>
+</ol>
+</blockquote>
+<blockquote>
+<p>对于 DriverManager.registerdriver
+方法了解即可，因为我们今后注册驱动只会
+Class.forName(),而不会使用这个方法。</p>
+</blockquote>
+<h3 id="connection">2.Connection</h3>
+<p>Connection 最为重要的方法就是获取 Statement :</p>
+<p><code>Statement stmt = con.createStatement():</code></p>
+<p>后面在学习 Resultset 方法时，还要学习一下下面的方法:</p>
+<p><code>Statement stmt = con.createStatement(int.int);</code></p>
+<p>这两个 int 参数是用来确定创建 Statement 能生成什么样的。</p>
+<h3 id="statement">3.Statement</h3>
+<p>Statement 最为重要的方法是:</p>
+<p>​ 1. <code>int executeUpdate(String sgl)</code>:执行更新操作，即执行
+insert、update、delete 语句，其实这个方法也可以执行 create table、 alter
+table，以及 drop table 等语句，但我们很少会使用 JDBC 来执行这些语句;</p>
+<ol start="2" type="1">
+<li><code>Resultset executeQuery(String sql)</code>:执行查询操作,执行查询操作会返回
+ResultSet,即结果集</li>
+</ol>
+<blockquote>
+<p>Statement 还有一个 boolean
+execute()方法，这个方法可以用来执行增、删、改、查所有 SQL
+语句。该方法返回的是 boolean 类型，表示 SQL 语句是否执行成功。</p>
+<ol type="1">
+<li><p>如果使用 execute()方法执行的是更新语句，那么还要调用 int
+<code>getUpdateCount()</code>来获聊 insert、update . dellete
+语句所影响的行数。</p></li>
+<li><p>如果使用
+execute()方法执行的是查询语句，那么还要调用<code>Resultset getResultset()</code>来获取
+select 语句的查询结果。</p></li>
+</ol>
+</blockquote>
+<h3 id="resultset-滚动结果集">4.ResultSet 滚动结果集</h3>
+<figure>
+<img
+src="https://i-blog.csdnimg.cn/blog_migrate/c16be33b33460aa17dc3194f5cb3ed55.png"
+alt="image.png" />
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<p>获取结果集元数据!</p>
+<ol type="1">
+<li><p>得到元数据:<code>rs.getMetaData()</code>，返回值为<code>ResultSetMetaData</code></p></li>
+<li><p>获取结果集列数:<code>int getColumncount()</code></p></li>
+<li><p>获职指定列的列名:<code>string getcolumnName(String collndex)</code></p></li>
+</ol>
+<figure>
+<img
+src="https://i-blog.csdnimg.cn/blog_migrate/e471b9a32f0e6e2fe2e5f891da69e857.png"
+alt="image.png" />
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<p>上面方法分为两类，一类用来判断游标位置的，另一类是用来移动游标的。</p>
+<p>如果结果集是不可滚动的，那么只能使用
+next()方法来移动游标，而<code>beforeEitst()、afterLast() 、 first() 、 last()、previous()、relative()</code>方法都不能使用!</p>
+<p>结果集是否支持滚动，要从 connection
+类的<code>createStatement()</code>方法说起。也就是说创建的 Statement
+决定了使用 Statement 创建的 Resultset 是否支持滚动。</p>
+<p><code>statement createstatement( int resultsetTypes, int resultsetconcurrency)</code>
+resultSetTvpe 的可选值:</p>
+<ul>
+<li><code>ResultSet.TYPE_FORWARD._ONLY</code>:不滚动结果集。</li>
+<li><code>ResultSet.TYPE.SCROLL.INSENSITIVE</code>:滚动结果集，但结果集数据不会再跟随数据库而变化。</li>
+<li><code>ResultSet.TYPE_SCROLL_SENSITIVE</code>:滚动结果集,但结果集数据不会再跟随数据库而变化。</li>
+</ul>
+<h4 id="一.-结果集特性">一. 结果集特性</h4>
+<p>当使用 connection 的<code>createStatement();</code>时，已经确定了
+statement 生成的结果集是什么特性。</p>
+<p><code>con.createsttement()；</code></p>
+<p>生成的结果集:不滚动、不敏感、不可更新!</p>
+<p>结果集是否支持滚动，要从 Connection 类的
+createStatement()方法说起。也就是说创建的 Statement 决定了使用 statement
+创建的 Resultset 是否支持滚动。</p>
+<h4 id="二.第一个参数">二.第一个参数</h4>
+<ul>
+<li><p><code>Resultset.TYPE_FORWARD_ONLY</code>:不滚动结果集;</p></li>
+<li><p><code>ResultSeL.TYPE_SCROLL_INSENSITIVE</code>:滚动结果集，但结果集数据不会再跟随数据库而变化;</p></li>
+<li><p><code>ResultSet.TYPE_SCROLL_SENSITIVE)</code>:滚动结果集;但结果集数据不会再跟随数据库而变化;</p></li>
+</ul>
+<blockquote>
+<p>不想滚动使用 FORWARD,想滚动使用 SCROLL。</p>
+</blockquote>
+<h4 id="三.第二个参数">三.第二个参数</h4>
+<ul>
+<li><p><code>CONCUR_READ_ONLY</code>:结果集是只读的，不能通过修改结果集而反向影响数据库;</p></li>
+<li><p><code>CONCUR_UPDATABLE</code>:结果集是可更新的，对结果集的更新可以反向影响数据库。</p></li>
+</ul>
+<p>可以看出，如果想使用滚动的结果集，应该选择<code>TYPE_SCROLL_INSENSITiIVE</code>其实很少有数据库驱动会支持<code>TYPE_SCROLL_SENSITiIVE</code>的特性</p>
+<blockquote>
+<p>通常我们也不需要查询到的结果集再受到数据库变化的影响。</p>
+<p>敏感是指数据库变了，结果集也跟随其变化。</p>
+<p>可更新是指结果集如果更改，进而反向影响数据库。</p>
+<p>一般日常使用 READ 和 FORWARD</p>
+</blockquote>
+<hr />
+<blockquote>
+<p>使用 createSttement 创建的程序，可以调用以下几种：</p>
+<ul>
+<li><p><code>Void before First()</code>:把光标放到第一行的前面，这也是光标默认的位置。</p></li>
+<li><p><code>Void afterLast()</code>:把光标放到最后一行的后面。</p></li>
+<li><p><code>Boolean first()</code>:把光标放到第一行的位置上，返回值表示调控光标是否成功。</p></li>
+<li><p><code>Boolean last()</code>:把光标放到最后一行的位置上。</p></li>
+<li><p><code>Boolean next()</code>:把光标向下挪一行。</p></li>
+</ul>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://example.com">lxbing</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://example.com/2022/06/19/jdbc%E5%85%A5%E9%97%A8/">http://example.com/2022/06/19/jdbc%E5%85%A5%E9%97%A8/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="http://example.com" target="_blank">robin-blog</a>！</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/image/tx.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2022/06/28/%E5%8E%9F%E7%94%9FAjax/" title="原生Ajax"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">原生Ajax</div></div><div class="info-2"><div class="info-item-1">ajax 发送异步请求的四部操作 1.得到 XMLHttpRequest ajax 只需掌握 XMLHttpRequest   image.png  2.打开与服务器的连接 xmlHttp.open():用来打开与服务器的连接，它需要三个参数：  请求方式：GET 或 POST 请求的 URL：指定服务器端资源，如：/day23 1/AServerlet 请求是否为异步：若为 true 表示发送异步请求，否则同步请求。 ​ xmlHttp.open(“GET”,”/day23_1/AServer”,true); ​ xmlHTTP.open("POST","/day23_1/AServlet",true)  3.发送请求 ​ GET:xmlHttp.send(null);若不给出，可能会造成部分浏览器无法发送。 参数：即请求体内容，若为 GET 请求，必须给出 null。 ​ POST: 1234/*设置请求头*/xmlHTTP.setRequestHeader(&quot;Content-type&quot;, &quot;applic...</div></div></div></a><a class="pagination-related" href="/2022/06/19/Listener-session%E7%9A%84%E9%92%9D%E5%8C%96%E4%B8%8E%E6%B4%BB%E5%8C%96/" title="Listener-session的钝化与活化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Listener-session的钝化与活化</div></div><div class="info-2"><div class="info-item-1"> ​ 假设我们在淘宝中用户过多的时候，虽然 session 没有下限，但 session 的数量就会不断增多。之后就会导致内存无法承受，此时就会有一些 session 长时间都没有活动。服务器启动时就会将这些很久没有活动的 session 放到硬盘上，让内存给空出来。就会使得很多的 session 被保存到硬盘上以此来空出内存。而即便之后需要再次访问 ession，它就会再次从硬盘中将 session 给放回来使用。这样用户就不会感觉到自己掉线了。这个过程就是 session 的钝化和活化。  钝化 ​ Tomcat 会在 session 从时间不被使用时钝化 session 对象，所谓钝化 session ,就是把 session 通过序列化的方式保存到硬盘文件中。 活化 ​ 当用户再使用 session 时,Tomcat 还会把钝化的对象再活化 session，所谓活化就是把硬盘文件中的 session 在反序列化回内存。当 session 被 Tomcat 钝化时， session 中存储的对象也被纯化，当 session 被活化时，也会把...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/image/tx.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">lxbing</div><div class="author-info-description">干就完了</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/robin-lxbing"><i class="fab fa-github"></i><span>github</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:lxbing2000@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="http://wpa.qq.com/msgrd?v=3&amp;uin=2506444512&amp;site=qq&amp;menu=yes" target="_blank" title="QQ"><i class="fab fa-qq"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#drivermanager"><span class="toc-number">1.</span> <span class="toc-text">1.DriverManager</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#connection"><span class="toc-number">2.</span> <span class="toc-text">2.Connection</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#statement"><span class="toc-number">3.</span> <span class="toc-text">3.Statement</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#resultset-%E6%BB%9A%E5%8A%A8%E7%BB%93%E6%9E%9C%E9%9B%86"><span class="toc-number">4.</span> <span class="toc-text">4.ResultSet 滚动结果集</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%80.-%E7%BB%93%E6%9E%9C%E9%9B%86%E7%89%B9%E6%80%A7"><span class="toc-number">4.1.</span> <span class="toc-text">一. 结果集特性</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%8C.%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%8F%82%E6%95%B0"><span class="toc-number">4.2.</span> <span class="toc-text">二.第一个参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89.%E7%AC%AC%E4%BA%8C%E4%B8%AA%E5%8F%82%E6%95%B0"><span class="toc-number">4.3.</span> <span class="toc-text">三.第二个参数</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/07/18/%E4%BB%80%E4%B9%88%E6%98%AF%E9%94%81%EF%BC%9F%E6%AD%BB%E9%94%81%E7%9A%84%E4%B8%89%E7%A7%8D%E6%83%85%E5%86%B5%E5%8F%8A%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95/" title="什么是锁？死锁的三种情况及解决办法">什么是锁？死锁的三种情况及解决办法</a><time datetime="2025-07-18T02:19:15.000Z" title="发表于 2025-07-18 10:19:15">2025-07-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/" title="动量迭代快速梯度符号方法(Momentum Iterative FGSM,MI-FGSM)">动量迭代快速梯度符号方法(Momentum Iterative FGSM,MI-FGSM)</a><time datetime="2022-07-29T01:25:00.000Z" title="发表于 2022-07-29 09:25:00">2022-07-29</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/06/28/%E5%8E%9F%E7%94%9FAjax/" title="原生Ajax">原生Ajax</a><time datetime="2022-06-28T02:36:00.000Z" title="发表于 2022-06-28 10:36:00">2022-06-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/06/19/jdbc%E5%85%A5%E9%97%A8/" title="jdbc入门">jdbc入门</a><time datetime="2022-06-19T13:44:11.000Z" title="发表于 2022-06-19 21:44:11">2022-06-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/06/19/Listener-session%E7%9A%84%E9%92%9D%E5%8C%96%E4%B8%8E%E6%B4%BB%E5%8C%96/" title="Listener-session的钝化与活化">Listener-session的钝化与活化</a><time datetime="2022-06-19T04:25:00.000Z" title="发表于 2022-06-19 12:25:00">2022-06-19</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By lxbing</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
