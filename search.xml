@@ -1,0 +1,919 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>动量迭代快速梯度符号方法(Momentum Iterative FGSM,MI-FGSM)</title>
+    <url>/posts/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/</url>
+    <content><![CDATA[<p>一种用于生成对抗样本（adversarial examples）的技术。这种方法结合了动量和快速梯度符号方法（FGSM），旨在提高对抗样本的攻击效果和稳定性。</p>
+<h4 id="1-背景"><a href="#1-背景" class="headerlink" title="1. 背景"></a>1. 背景</h4><ul>
+<li><strong>对抗样本</strong>：对抗样本是通过在输入数据中加入小扰动来误导机器学习模型的输入。</li>
+<li><strong>快速梯度符号方法 (FGSM)</strong>：FGSM 是一种生成对抗样本的方法，通过计算损失函数相对于输入的梯度并沿着梯度方向对输入进行小幅度扰动来生成对抗样本。</li>
+<li><strong>动量</strong>：在优化算法中，动量用于加速收敛，通过累积前几次梯度的指数加权平均，使得优化过程更稳定。即保留的历史梯度称为动量。</li>
+</ul>
+<h4 id="2-基本思想"><a href="#2-基本思想" class="headerlink" title="2. 基本思想"></a>2. 基本思想</h4><p>MI-FGSM 将动量引入到 FGSM 中，通过在每一步迭代中累积梯度的动量在，生成更强的对抗样本。其核心思想是在每一步迭代中，利用动量来平滑和加速梯度更新。</p>
+<p><strong>FGSM 加入动量的好处</strong></p>
+<ol>
+<li><p><strong>抑制局部抖动</strong>：</p>
+<ul>
+<li>动量机制可以帮助平滑梯度更新，减少每次迭代中的抖动。这有助于避免陷入局部最优解，使得生成的对抗样本更加稳定和有效。</li>
+</ul>
+</li>
+<li><p><strong>加快收敛速度</strong>：</p>
+<ul>
+<li>动量项通过累积之前几次迭代的梯度方向，加快了梯度下降的收敛速度。在对抗攻击中，这意味着可以更快地找到有效的对抗扰动，从而提高攻击效率。</li>
+</ul>
+</li>
+<li><p><strong>增强攻击效果</strong>：</p>
+<ul>
+<li>动量机制能够更有效地找到目标模型的弱点，使得生成的对抗样本在欺骗模型时更具攻击性。这是因为动量累积了多个迭代的梯度信息，能够更全面地捕捉模型的脆弱点。</li>
+</ul>
+</li>
+<li><p><strong>提高鲁棒性</strong>：</p>
+<ul>
+<li>动量的使用可以使对抗攻击更加鲁棒，即对不同模型和输入样本的攻击效果更加一致和有效。动量积累了多个迭代的梯度，能够在不同的输入样本和模型上保持稳定的攻击性能。</li>
+</ul>
+</li>
+</ol>
+<h4 id="3-公式"><a href="#3-公式" class="headerlink" title="3. 公式"></a>3. 公式</h4><p>假设模型的损失函数为 $\mathcal{L}(f(x_{\text{adv}}^t), y)$ ，在对抗样本 $x_{\text{adv}}^t$ 下，模型$f$的损失值，其中$y$是真实标签。MI-FGSM 的基本步骤如下：</p>
+<ol>
+<li><p>初始化扰动 $\epsilon_0 &#x3D; 0$</p>
+<blockquote>
+<p>$\epsilon$一个控制对抗性扰动强度的重要参数。它决定了对抗样本与原始样本之间的最大差异，确保生成的对抗样本在合法像素值范围内，并在攻击成功率和可检测性之间找到平衡。</p>
+</blockquote>
+</li>
+<li><p>设定动量因子 $\mu$和步长系数$\alpha$ ( 其中$\alpha&#x3D;\frac{\epsilon}{T}$ )</p>
+</li>
+<li><p>对于每一步$t$：</p>
+<p>$$<br>\begin{aligned}<br>&amp;g_0 &#x3D; 0, \quad x_{\text{adv}}^0 &#x3D; x \<br>&amp;g_{t+1} &#x3D; \mu \cdot g_t + \frac{\nabla_x \mathcal{L}(f(x_{\text{adv}}^t), y)}{|\nabla_x \mathcal{L}(f(x_{\text{adv}}^t), y)|<em>1} \<br>&amp;x</em>{\text{adv}}^{t+1} &#x3D; \text{Clip}<em>{x, \epsilon}{x</em>{\text{adv}}^t + \alpha \cdot \text{sign}(g_{t+1})}<br>\end{aligned}<br>$$</p>
+<blockquote>
+<p>1-范数归一化：</p>
+<ul>
+<li><strong>1-范数</strong>等于各个值的绝对值相加，也称曼哈顿距离。例如向量 X&#x3D;[2, 3, -5, -7] ，X 的 1-范数&#x3D;|2|+|3|+|-5|+|-7|&#x3D;17</li>
+<li><strong>归一化</strong>是一种数理统计中常用的数据预处理手段，在机器学习中归一化通常将数据向量每个维度的数据映射到(0,1)或(-1,1)之间的区间或者将数据向量的某个范数映射为 1。</li>
+</ul>
+</blockquote>
+</li>
+</ol>
+<p>其中：</p>
+<ul>
+<li><p>( $\mathbf{g}_t$ ) 是之前( t )次迭代的累积梯度，即第 ( t ) 步的动量梯度</p>
+</li>
+<li><p>( $x_t$ ) 是第 ( t ) 步的输入</p>
+</li>
+<li><p>( $\alpha$ ) 是步长系数</p>
+<blockquote>
+<p>在动量迭代快速梯度符号方法（MI-FGSM）中，$\alpha$ 是步长系数，用于控制每次迭代更新对抗样本的幅度。</p>
+<p>通常，$\alpha$ 的选择与 $\epsilon$ 以及迭代次数 $T$ 相关。一个常见的选择是使 $\alpha$ 与 $\epsilon &#x2F; T$ 大致相等，以便在 $T$ 次迭代之后，对抗扰动的总和接近 $\epsilon$。例如，如果 $\epsilon &#x3D; 0.3$ 且 $T &#x3D; 40$，则可以选择 $\alpha &#x3D; \frac{0.3}{40} &#x3D; 0.0075$。</p>
+</blockquote>
+</li>
+<li><p>( $\mu$ ) 是动量衰减因子</p>
+<blockquote>
+<p>在动量迭代快速梯度符号方法（MI-FGSM）中，$\mu$ 是动量项的衰减因子，用于控制梯度更新过程中的动量累积。动量的作用是利用之前的梯度信息来增强当前更新的方向，从而提高对抗样本生成的效率。</p>
+<p>动量衰减因子的定义与作用</p>
+<ul>
+<li><strong>定义</strong>：$\mu$ 是一个介于 0 和 1 之间的值，用于控制动量的更新。在每次迭代中，动量项 $g$ 会被更新为 $\mu \cdot g + \text{gradient}$，其中 $\text{gradient}$ 是当前计算的梯度。</li>
+<li><strong>作用</strong>：<ul>
+<li><strong>提高对抗样本的有效性</strong>：动量能够帮助累积和利用历史梯度信息，从而增强对抗样本的攻击效果。</li>
+<li><strong>平滑更新</strong>：动量项可以平滑梯度的波动，避免更新过程中的剧烈变化，使生成的对抗样本更加稳定。</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<h4 id="4-具体实现"><a href="#4-具体实现" class="headerlink" title="4. 具体实现"></a>4. 具体实现</h4><p>以下是使用 TensorFlow 实现 MI-FGSM 的示例代码：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    model:被攻击的模型</span></span><br><span class="line"><span class="string">    input_image:输入图像</span></span><br><span class="line"><span class="string">    input_label:真是标签</span></span><br><span class="line"><span class="string">    eps:最大扰动</span></span><br><span class="line"><span class="string">    num_iter:迭代次数</span></span><br><span class="line"><span class="string">    mu:动量因子</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">create_momentum_iterative_adv_examples</span>(<span class="params">model, input_image, input_label, eps, num_iter, mu</span>):</span><br><span class="line">    <span class="comment"># x_adv初始化为输入图像，创建具有相同值的新张量</span></span><br><span class="line">    x_adv = tf.identity(input_image)</span><br><span class="line">    g = tf.zeros_like(input_image)</span><br><span class="line">    <span class="comment"># 计算每次的alpha</span></span><br><span class="line">    alpha = eps / num_iter</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(num_iter):</span><br><span class="line">        <span class="keyword">with</span> tf.GradientTape() <span class="keyword">as</span> tape:</span><br><span class="line">            tape.watch(x_adv)</span><br><span class="line">            prediction = model(x_adv)</span><br><span class="line">            loss = loss_object(input_label, prediction)</span><br><span class="line">        <span class="comment"># 梯度计算和归一化</span></span><br><span class="line">        gradient = tape.gradient(loss, x_adv)</span><br><span class="line">        gradient = gradient / tf.reduce_mean(tf.<span class="built_in">abs</span>(gradient), axis=[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>], keepdims=<span class="literal">True</span>)</span><br><span class="line">        <span class="comment"># g为前i次迭代的累积梯度</span></span><br><span class="line">        g = mu * g + gradient</span><br><span class="line">        adv = alpha * tf.sign(g)</span><br><span class="line">        plt.imshow(adv[<span class="number">0</span>] * <span class="number">0.5</span> + <span class="number">0.5</span>)</span><br><span class="line">        <span class="comment"># 加上扰动</span></span><br><span class="line">        x_adv = x_adv + adv</span><br><span class="line">        <span class="comment"># clip操作</span></span><br><span class="line">        x_adv = tf.clip_by_value(x_adv, -<span class="number">1</span>, <span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> x_adv</span><br></pre></td></tr></table></figure>
+
+<h4 id="5-测试"><a href="#5-测试" class="headerlink" title="5. 测试"></a>5. 测试</h4><h5 id="epsilon-影响测试"><a href="#epsilon-影响测试" class="headerlink" title="$\epsilon$ 影响测试"></a>$\epsilon$ 影响测试</h5><ul>
+<li><p>$\epsilon$ &#x3D; 0</p>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/4b8e6bf86ec6499bbcddeaaf14968789-1773665931905-3.png" alt="img"></p>
+</li>
+<li><p>$\epsilon$ &#x3D; 0.05</p>
+</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/c4b83368f53f46019d9bc57b353f010b-1773666159191-7.png" alt="img"></p>
+<ul>
+<li>$\epsilon$&#x3D; 0.10</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/48f5dd193366458eb7abadac7558f1dd.png" alt="img"></p>
+<ul>
+<li>$\epsilon$&#x3D; 0.15</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/77980c82dd424ecd94e725726455bd6b-1773666201569-22.png" alt="img"></p>
+<ul>
+<li>$\epsilon$&#x3D; 0.20</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/7dea2527df2b46358f7eb91be41dc867.png" alt="img"></p>
+<ul>
+<li>$\epsilon$&#x3D; 0.25</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/17d29d95c0294cbdb613828dd89de93b.png" alt="img"></p>
+<ul>
+<li>$\epsilon$&#x3D; 0.30</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/1eb0572c06774dd4a7d94aa725163691.png" alt="img"></p>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/23916e37e2dc4d90a1e8de7506bf3d7f.png" alt="img"></p>
+<h5 id="num-iter-影响测试"><a href="#num-iter-影响测试" class="headerlink" title="num_iter 影响测试"></a>num_iter 影响测试</h5><blockquote>
+<p>它控制了对抗样本生成过程中的迭代次数。即<code>num_iter</code> 决定了扰动被逐步施加到输入图像上的次数。</p>
+</blockquote>
+<ul>
+<li>num_iter&#x3D;1</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/08eea2d1d0f24447b8be5aef3e2ce236.png" alt="img"></p>
+<ul>
+<li>num_iter&#x3D;5</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/2d4a4f94901f4da7af66fdf8d35ae0b3.png" alt="img"></p>
+<ul>
+<li>num_iter&#x3D;10</li>
+</ul>
+<p><img src="/2024/07/29/%E5%8A%A8%E9%87%8F%E8%BF%AD%E4%BB%A3%E5%BF%AB%E9%80%9F%E6%A2%AF%E5%BA%A6%E7%AC%A6%E5%8F%B7%E6%96%B9%E6%B3%95(Momentum%20Iterative%20FGSM,MI-FGSM)%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/0985677ddb4343f3a43849c640497875.png" alt="img"></p>
+<h4 id="6-增强攻击效果的原因"><a href="#6-增强攻击效果的原因" class="headerlink" title="6. 增强攻击效果的原因"></a>6. 增强攻击效果的原因</h4><ol>
+<li><strong>平滑更新过程</strong></li>
+</ol>
+<p>动量机制通过累积之前几次迭代的梯度，使得<strong>每次更新不再仅仅依赖当前梯度，而是考虑了一段时间内梯度的平均效果</strong>。这种平滑作用可以减少由于随机梯度波动引起的抖动，使得对抗样本的更新方向更加稳定和一致，从而更有效地找到使模型错误分类的扰动。</p>
+<ol start="2">
+<li><strong>提高梯度信息的利用率</strong></li>
+</ol>
+<p>在普通的梯度下降法中，每次更新仅依赖当前计算的梯度，可能会忽略一些有价值的历史梯度信息。而动量机制通过累积多次迭代的梯度信息，可以更全面地利用这些梯度信息，从而在更大范围内找到模型的弱点，增强对抗攻击的效果。</p>
+<ol start="3">
+<li><strong>加快收敛速度</strong></li>
+</ol>
+<p>动量机制能够加速梯度下降的收敛过程。在对抗攻击中，快速找到有效的对抗扰动是非常关键的。通过动量机制，累积的梯度信息可以使得扰动在更少的迭代次数内达到预期的效果，提高攻击效率。</p>
+<ol start="4">
+<li><strong>克服局部最优</strong></li>
+</ol>
+<p>在高维空间中，直接使用当前梯度更新容易陷入局部最优解。而动量机制通过累积多个梯度信息，可以帮助模型摆脱局部最优解的困扰，更容易找到全局最优解或更好的局部最优解，从而生成更强的对抗样本。</p>
+]]></content>
+      <categories>
+        <category>智能安全</category>
+      </categories>
+      <tags>
+        <tag>对抗攻击</tag>
+        <tag>深度学习</tag>
+        <tag>图像分类</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Filter入门</title>
+    <url>/posts/Filter%E7%AE%80%E6%98%93%E5%85%A5%E9%97%A8/</url>
+    <content><![CDATA[<h4 id="什么叫-Filter"><a href="#什么叫-Filter" class="headerlink" title="什么叫 Filter"></a>什么叫 Filter</h4><p> 它会在一组资源（jsp，servles，.css，.html 等）的前面执行。它可以让请求得到目标资源，也可以不让请求得达到目标资源。过滤器有拦截的能力。（对一组资源进行统一处理）</p>
+<h4 id="Filter-接口三个方法（生命周期）"><a href="#Filter-接口三个方法（生命周期）" class="headerlink" title="Filter 接口三个方法（生命周期）"></a>Filter 接口三个方法（生命周期）</h4><ol>
+<li><code>void init(FilterConfig)</code></li>
+</ol>
+<ul>
+<li>创建之后马上执行；Filter 会在服务器启动时就创建</li>
+</ul>
+<ol start="2">
+<li><code>void destory</code></li>
+</ol>
+<ul>
+<li>销毁之前，执行在服务期关闭时销毁</li>
+</ul>
+<ol start="3">
+<li><code>viod doFilter(servletRequest，ServletResponse，FilterChain)</code></li>
+</ol>
+<ul>
+<li>每次过滤时都会执行</li>
+</ul>
+<blockquote>
+<p>Filter 是单例的！</p>
+</blockquote>
+<p>FilterConfig 与 ServletConfig 相似</p>
+<ul>
+<li><p>获取初始化参数：getInitParameter()</p>
+</li>
+<li><p>获取过谚器名称：getFilterName()</p>
+</li>
+<li><p>获取 appliction:getServ1 etContext()</p>
+</li>
+</ul>
+<p>FilterChain</p>
+<ul>
+<li>doFilter(servletRequest, ServletResponse)：功能是放行，就相当于调用了目标 Servlet 的 service()</li>
+</ul>
+<p>web.xml 中配置 filter</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">filter</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">filter-name</span>&gt;</span><span class="tag">&lt;/<span class="name">filter-name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">filter-class</span>&gt;</span><span class="tag">&lt;/<span class="name">filter-class</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">filter</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">filter-mapping</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">filter-name</span>&gt;</span><span class="tag">&lt;/<span class="name">filter-name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">url-pattern</span>&gt;</span>/*<span class="tag">&lt;/<span class="name">url-pattern</span>&gt;</span> <span class="comment">&lt;!--访问任何页面都会经过该filter--&gt;</span></span><br><span class="line">    <span class="comment">&lt;!--&lt;url-pattern&gt;/web/*&lt;/url-pattern&gt;--&gt;</span> <span class="comment">&lt;!--访问web路径下才会经过该filter--&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">filter-mapping</span>&gt;</span></span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Listener-session的钝化与活化</title>
+    <url>/posts/Listener-session%E7%9A%84%E9%92%9D%E5%8C%96%E4%B8%8E%E6%B4%BB%E5%8C%96/</url>
+    <content><![CDATA[<blockquote>
+<p> 假设我们在淘宝中用户过多的时候，虽然 session 没有下限，但 session 的数量就会不断增多。之后就会导致内存无法承受，此时就会有一些 session 长时间都没有活动。服务器启动时就会将这些很久没有活动的 session 放到硬盘上，让内存给空出来。就会使得很多的 session 被保存到硬盘上以此来空出内存。而即便之后需要再次访问 ession，它就会再次从硬盘中将 session 给放回来使用。这样用户就不会感觉到自己掉线了。这个过程就是 session 的钝化和活化。</p>
+</blockquote>
+<h4 id="钝化"><a href="#钝化" class="headerlink" title="钝化"></a>钝化</h4><p> Tomcat 会在 session 从时间不被使用时钝化 session 对象，所谓钝化 session ,就是把 session 通过序列化的方式保存到硬盘文件中。</p>
+<h4 id="活化"><a href="#活化" class="headerlink" title="活化"></a>活化</h4><p> 当用户再使用 session 时,Tomcat 还会把钝化的对象再活化 session，所谓活化就是把硬盘文件中的 session 在反序列化回内存。当 session 被 Tomcat 钝化时， session 中存储的对象也被纯化，当 session 被活化时，也会把 session 中存储的对象活化。</p>
+<hr>
+<blockquote>
+<p>钝化和活化 session,其实就是使用序列化和反序列化技术把 session 从内存保存到硬盘，和把 session 从硬盘加载到内存。</p>
+</blockquote>
+<h4 id="配置文件中如何配置-session-钝化"><a href="#配置文件中如何配置-session-钝化" class="headerlink" title="配置文件中如何配置 session 钝化"></a>配置文件中如何配置 session 钝化</h4><figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">Context</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">Manager</span> <span class="attr">claseName</span>=<span class="string">&quot;org.apache.catalina.session.PersistentManager&quot;</span></span></span><br><span class="line"><span class="tag"><span class="attr">maxIdleSwap</span>=<span class="string">&quot;1&quot;</span>&gt;</span>	<span class="comment">&lt;!--如果session一分钟没有使用会被钝化--&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">store</span> <span class="attr">className</span>=<span class="string">&quot;org.apache.catalina.session.Filestore&quot;</span></span></span><br><span class="line"><span class="tag"><span class="attr">directory</span>=<span class="string">&quot;mysession&quot;</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">Manager</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">Context</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>JavaWeb</category>
+      </categories>
+      <tags>
+        <tag>浏览器原理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>jdbc入门</title>
+    <url>/posts/jdbc%E5%85%A5%E9%97%A8/</url>
+    <content><![CDATA[<h3 id="1-DriverManager"><a href="#1-DriverManager" class="headerlink" title="1.DriverManager"></a>1.DriverManager</h3><p>其实我们今后只需要会用 DriverManager 的<code>getconnection()</code>方法即可:</p>
+<ol>
+<li><p><code>Class.forName(&quot;com.mysql.jdbc.Driver&quot;)； </code><em>注册驱动</em></p>
+</li>
+<li><p><code>String url=&quot;jdbc:mysql://localhost:3306/mydb1&quot;</code></p>
+</li>
+<li><p><code>String username = &quot;root&quot;;</code></p>
+</li>
+<li><p><code>String password =“123&quot;;</code></p>
+</li>
+<li><p><code>Connection con = DriverManager.getConnection(url username, password);</code></p>
+</li>
+</ol>
+<blockquote>
+<p>注意,上面代码可能出现的两种异常:</p>
+<ol>
+<li>ClassNotFoundException:这个异常是在第 1 句上出现的，出现这个异常有两个可能:</li>
+</ol>
+<ul>
+<li><p>你没有给出 mysal 的 jar 包;</p>
+</li>
+<li><p>你把类名称打错了，查看类名是不是 com.mysal.idbc.Driver- u</p>
+</li>
+</ul>
+<ol start="2">
+<li>SOLException:这个异常出现在第 5 句,出现这个异常就是三个参数的问题，往往 username 和 password 一般不是出错，所以需要认真查看 url 是否打错。</li>
+</ol>
+</blockquote>
+<blockquote>
+<p>对于 DriverManager.registerdriver 方法了解即可，因为我们今后注册驱动只会 Class.forName(),而不会使用这个方法。</p>
+</blockquote>
+<h3 id="2-Connection"><a href="#2-Connection" class="headerlink" title="2.Connection"></a>2.Connection</h3><p>Connection 最为重要的方法就是获取 Statement :</p>
+<p><code>Statement stmt = con.createStatement():</code></p>
+<p>后面在学习 Resultset 方法时，还要学习一下下面的方法:</p>
+<p><code>Statement stmt = con.createStatement(int.int);</code></p>
+<p>这两个 int 参数是用来确定创建 Statement 能生成什么样的。</p>
+<h3 id="3-Statement"><a href="#3-Statement" class="headerlink" title="3.Statement"></a>3.Statement</h3><p>Statement 最为重要的方法是:</p>
+<ol>
+<li><p><code>int executeUpdate(String sgl)</code>:执行更新操作，即执行 insert、update、delete 语句，其实这个方法也可以执行 create table、 alter table，以及 drop table 等语句，但我们很少会使用 JDBC 来执行这些语句;</p>
+</li>
+<li><p><code>Resultset executeQuery(String sql)</code>:执行查询操作,执行查询操作会返回 ResultSet,即结果集</p>
+</li>
+</ol>
+<blockquote>
+<p>Statement 还有一个 boolean execute()方法，这个方法可以用来执行增、删、改、查所有 SQL 语句。该方法返回的是 boolean 类型，表示 SQL 语句是否执行成功。</p>
+<ol>
+<li><p>如果使用 execute()方法执行的是更新语句，那么还要调用 int <code>getUpdateCount()</code>来获聊 insert、update . dellete 语句所影响的行数。</p>
+</li>
+<li><p>如果使用 execute()方法执行的是查询语句，那么还要调用<code>Resultset getResultset()</code>来获取 select 语句的查询结果。</p>
+</li>
+</ol>
+</blockquote>
+<h3 id="4-ResultSet-滚动结果集"><a href="#4-ResultSet-滚动结果集" class="headerlink" title="4.ResultSet 滚动结果集"></a>4.ResultSet 滚动结果集</h3><p><img src="/2022/06/19/jdbc%E5%85%A5%E9%97%A8/c16be33b33460aa17dc3194f5cb3ed55.png" alt="img"></p>
+<p>获取结果集元数据!</p>
+<ol>
+<li><p>得到元数据:<code>rs.getMetaData()</code>，返回值为<code>ResultSetMetaData</code></p>
+</li>
+<li><p>获取结果集列数:<code>int getColumncount()</code></p>
+</li>
+<li><p>获职指定列的列名:<code>string getcolumnName(String collndex)</code></p>
+</li>
+</ol>
+<p><img src="/2022/06/19/jdbc%E5%85%A5%E9%97%A8/e471b9a32f0e6e2fe2e5f891da69e857.png" alt="img"></p>
+<p>上面方法分为两类，一类用来判断游标位置的，另一类是用来移动游标的。</p>
+<p>如果结果集是不可滚动的，那么只能使用 next()方法来移动游标，而<code>beforeEitst()、afterLast() 、 first() 、 last()、previous()、relative()</code>方法都不能使用!</p>
+<p>结果集是否支持滚动，要从 connection 类的<code>createStatement()</code>方法说起。也就是说创建的 Statement 决定了使用 Statement 创建的 Resultset 是否支持滚动。</p>
+<p><code>statement createstatement( int resultsetTypes, int resultsetconcurrency)</code> resultSetTvpe 的可选值:</p>
+<ul>
+<li><code>ResultSet.TYPE_FORWARD._ONLY</code>:不滚动结果集。</li>
+<li><code>ResultSet.TYPE.SCROLL.INSENSITIVE</code>:滚动结果集，但结果集数据不会再跟随数据库而变化。</li>
+<li><code>ResultSet.TYPE_SCROLL_SENSITIVE</code>:滚动结果集,但结果集数据不会再跟随数据库而变化。</li>
+</ul>
+<h4 id="一-结果集特性"><a href="#一-结果集特性" class="headerlink" title="一. 结果集特性"></a>一. 结果集特性</h4><p>当使用 connection 的<code>createStatement();</code>时，已经确定了 statement 生成的结果集是什么特性。</p>
+<p><code>con.createsttement()；</code></p>
+<p>生成的结果集:不滚动、不敏感、不可更新!</p>
+<p>结果集是否支持滚动，要从 Connection 类的 createStatement()方法说起。也就是说创建的 Statement 决定了使用 statement 创建的 Resultset 是否支持滚动。</p>
+<h4 id="二-第一个参数"><a href="#二-第一个参数" class="headerlink" title="二.第一个参数"></a>二.第一个参数</h4><ul>
+<li><p><code>Resultset.TYPE_FORWARD_ONLY</code>:不滚动结果集;</p>
+</li>
+<li><p><code>ResultSeL.TYPE_SCROLL_INSENSITIVE</code>:滚动结果集，但结果集数据不会再跟随数据库而变化;</p>
+</li>
+<li><p><code>ResultSet.TYPE_SCROLL_SENSITIVE)</code>:滚动结果集;但结果集数据不会再跟随数据库而变化;</p>
+</li>
+</ul>
+<blockquote>
+<p>不想滚动使用 FORWARD,想滚动使用 SCROLL。</p>
+</blockquote>
+<h4 id="三-第二个参数"><a href="#三-第二个参数" class="headerlink" title="三.第二个参数"></a>三.第二个参数</h4><ul>
+<li><p><code>CONCUR_READ_ONLY</code>:结果集是只读的，不能通过修改结果集而反向影响数据库;</p>
+</li>
+<li><p><code>CONCUR_UPDATABLE</code>:结果集是可更新的，对结果集的更新可以反向影响数据库。</p>
+</li>
+</ul>
+<p>可以看出，如果想使用滚动的结果集，应该选择<code>TYPE_SCROLL_INSENSITiIVE</code>其实很少有数据库驱动会支持<code>TYPE_SCROLL_SENSITiIVE</code>的特性</p>
+<blockquote>
+<p>通常我们也不需要查询到的结果集再受到数据库变化的影响。</p>
+<p>敏感是指数据库变了，结果集也跟随其变化。</p>
+<p>可更新是指结果集如果更改，进而反向影响数据库。</p>
+<p>一般日常使用 READ 和 FORWARD</p>
+</blockquote>
+<hr>
+<blockquote>
+<p>使用 createSttement 创建的程序，可以调用以下几种：</p>
+<ul>
+<li><p><code>Void before First()</code>:把光标放到第一行的前面，这也是光标默认的位置。</p>
+</li>
+<li><p><code>Void afterLast()</code>:把光标放到最后一行的后面。</p>
+</li>
+<li><p><code>Boolean first()</code>:把光标放到第一行的位置上，返回值表示调控光标是否成功。</p>
+</li>
+<li><p><code>Boolean last()</code>:把光标放到最后一行的位置上。</p>
+</li>
+<li><p><code>Boolean next()</code>:把光标向下挪一行。</p>
+</li>
+</ul>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>原生Ajax</title>
+    <url>/posts/%E5%8E%9F%E7%94%9FAjax/</url>
+    <content><![CDATA[<p>ajax 发送异步请求的四部操作</p>
+<h3 id="1-得到-XMLHttpRequest"><a href="#1-得到-XMLHttpRequest" class="headerlink" title="1.得到 XMLHttpRequest"></a>1.得到 XMLHttpRequest</h3><p>ajax 只需掌握 XMLHttpRequest</p>
+<p><img src="/2022/06/28/%E5%8E%9F%E7%94%9FAjax/7d60c4e7b661930edc694f10014b3b98.png" alt="img"></p>
+<h3 id="2-打开与服务器的连接"><a href="#2-打开与服务器的连接" class="headerlink" title="2.打开与服务器的连接"></a>2.打开与服务器的连接</h3><p>xmlHttp.open():用来打开与服务器的连接，它需要三个参数：</p>
+<ol>
+<li><p>请求方式：GET 或 POST</p>
+</li>
+<li><p>请求的 URL：指定服务器端资源，如：&#x2F;day23 1&#x2F;AServerlet</p>
+</li>
+<li><p>请求是否为异步：若为 true 表示发送异步请求，否则同步请求。<br>​ <code>xmlHttp.open(“GET”,”/day23_1/AServer”,true);</code><br>​ <code>xmlHTTP.open(&quot;POST&quot;,&quot;/day23_1/AServlet&quot;,true)</code></p>
+</li>
+</ol>
+<h3 id="3-发送请求"><a href="#3-发送请求" class="headerlink" title="3.发送请求"></a>3.发送请求</h3><p> GET:<code>xmlHttp.send(null);</code>若不给出，可能会造成部分浏览器无法发送。</p>
+<p>参数：即请求体内容，若为 GET 请求，必须给出 null。</p>
+<p> POST:</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*设置请求头*/</span></span><br><span class="line">xmlHTTP.setRequestHeader(<span class="string">&quot;Content-type&quot;</span>, <span class="string">&quot;application/x-www-form-urlencoded&quot;</span>);</span><br><span class="line"><span class="comment">/* 传参 */</span></span><br><span class="line">xmlHttp.send(<span class="string">&quot;username=zhangsan&amp;password=123&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-监听器"><a href="#4-监听器" class="headerlink" title="4.监听器"></a>4.监听器</h3><ol>
+<li>在 xmlHttp 对象的一个事件上注册监听器：onreadystatechange</li>
+</ol>
+<p> xmlHttp 对象共有 5 个状态：</p>
+<blockquote>
+<p>0 状态：刚创建，还没有调用 open（）方法；</p>
+<p>1 状态：请求开始，调用了 open（）方法，但还没有调用 send（）方法；</p>
+<p>2 状态：调用完 send（）方法；</p>
+<p>3 状态：服务器已经开始响应，但不表示响应结束；</p>
+<p>4 状态：服务器响应结束；</p>
+</blockquote>
+<ol start="2">
+<li>得到 xmlHttp 对象的状态：</li>
+</ol>
+<p><code>var state=xmlHttp.readyState; </code></p>
+<ol start="3">
+<li>得到响应的状态码：</li>
+</ol>
+<p><code>var status=xmlHttp.status;</code></p>
+<ol start="4">
+<li><p>得到服务器响应的内容</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> content=xmlHttp.<span class="property">responseText</span>;<span class="comment">//得到服务器的响应的文本格式内容；</span></span><br><span class="line"><span class="keyword">var</span> content=xmlHttp.<span class="property">responseXML</span>;<span class="comment">//得到服务器响应的XML内容，即Document对象；</span></span><br><span class="line"></span><br><span class="line">xmlHttp.<span class="property">onreadystatechange</span>=<span class="keyword">function</span>(<span class="params"></span>)&#123;<span class="comment">//这是xmlHttp的5种状态都会调用的方法</span></span><br><span class="line">    <span class="keyword">if</span>（xmlHttp.<span class="property">readystate</span>==<span class="number">4</span>&amp;&amp;xmlHttp.<span class="property">status</span>==<span class="number">200</span>）&#123;<span class="comment">//双重判断：判断是否为4状态，且要判断是否为200//获取服务器的响应内容</span></span><br><span class="line">        	<span class="keyword">var</span> text=xmlHttp.<span class="property">reponseText</span>;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+</ol>
+]]></content>
+      <categories>
+        <category>Web知识</category>
+      </categories>
+      <tags>
+        <tag>浏览器知识</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Cookie基础</title>
+    <url>/posts/JSP%E5%9F%BA%E7%A1%80--Cookie%E5%9F%BA%E7%A1%80/</url>
+    <content><![CDATA[<ul>
+<li><p><strong>HTTP 协议与 Cookie</strong></p>
+<ol>
+<li>Cookie 是由 HTTP 协议制定的，先由服务器保存 Cookie 到浏览器，在下次浏览器请求服务器时把上一次请求得到的 Cookie 归还给服务器</li>
+<li>由服务器创建保存到客户端浏览器的一个键值对，服务器保存 Cookie 的响应头，Set-Cookie: aaa&#x3D;AAA 。</li>
+<li>当浏览器请求服务器时，会把该服务器保存的 Cookie 随请求发送给服务器，浏览器归还 Cookie 的请求头。</li>
+<li>HTTP 协议规定（为浏览器减压）：<ul>
+<li>一个 Cookie 最大为 4KB；</li>
+<li>一个服务器最多向一个浏览器保存 20 个 Cookie</li>
+<li>一个浏览器最多保存 300 个 Cookie</li>
+</ul>
+</li>
+<li>浏览器大战：因为浏览器竞争很激烈，所以很多浏览器都会在一定范围内违反 HTTP 规定，但也不会让一个 Cookie 为 4GB。</li>
+</ol>
+</li>
+<li><p><strong>Cookie 的用途</strong></p>
+<ol>
+<li>服务器使用 Cookie 来识别和跟踪客户端状态。</li>
+<li>保存购物车（购物车中的商品不能使用 request 保存，因为他是一个用户向服务器发送的多个请求）</li>
+<li>显示上交登录名（一个用户的多个请求）</li>
+</ol>
+<blockquote>
+<p><code>Cookie不能跨浏览器！</code></p>
+</blockquote>
+</li>
+<li><p><strong>Cookie 的 maxAge</strong><br>Cookie 的生命值，即 Cookie 可保存的最大时长，以秒为单位。如：cookie.setMaxAge(60)表示 cookie 会被保存到硬盘 60s。</p>
+<blockquote>
+<ul>
+<li>maxAge&gt;0：浏览器会把 Cookie 保存到客户机的硬盘上，有效时长为设置的值。</li>
+<li>maxAge&lt;0：Cookie 只会在浏览器内存中存在，当用户关闭浏览器时，浏览器进程结束，同时 Cookie 也失去作用。</li>
+<li>maxAge&#x3D;0：浏览器会立即删除这个 Cookie。</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>JavaWeb</category>
+      </categories>
+      <tags>
+        <tag>浏览器原理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>什么是锁？死锁的三种情况及解决办法</title>
+    <url>/posts/%E4%BB%80%E4%B9%88%E6%98%AF%E9%94%81%EF%BC%9F%E6%AD%BB%E9%94%81%E7%9A%84%E4%B8%89%E7%A7%8D%E6%83%85%E5%86%B5%E5%8F%8A%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95/</url>
+    <content><![CDATA[<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>锁是计算机协调多个进程或线程并发访问某一资源的机制（避免发生资源争抢）。</p>
+<h3 id="锁的分类"><a href="#锁的分类" class="headerlink" title="锁的分类"></a>锁的分类</h3><ol>
+<li>对数据操作的粒度分<ol>
+<li>表锁：操作时，会锁定整个表，不会出现死锁。</li>
+<li>行锁：操作时，会锁定当前操作行，会出现死锁。</li>
+</ol>
+</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>存储引擎</th>
+<th>表锁</th>
+<th>行锁</th>
+<th>加锁方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>InnoDB</td>
+<td>支持</td>
+<td>支持</td>
+<td>在执行 UPDATE、DELETE、INSERT 语句时，自动给涉及的数据加<strong>排他锁</strong>，一般的 SELECT 语句<strong>不加任何锁</strong></td>
+</tr>
+<tr>
+<td>MyISAM</td>
+<td>支持</td>
+<td>不支持</td>
+<td>在执行 SELECT 前会自动给涉及的所有表加<strong>共享锁</strong>，在执行 UPDATE、DELETE、INSERT 等操作前，给涉及的表加<strong>排他锁</strong></td>
+</tr>
+</tbody></table>
+<ol start="2">
+<li>对数据操作的类型分<ol>
+<li><strong>共享锁</strong>（Share Locks，读锁）：事务 A 对数据加锁后，只能读取加锁的数据，不能读取其他数据，其他事务可以读取，均不能修改（增，删、改）。</li>
+<li><strong>排他锁</strong>（Exclusive Locks，写锁）：事务 A 操作时，其他事务不能对数据对象读取和修改。</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">--表锁模式</span></span><br><span class="line"><span class="comment">--加表锁</span></span><br><span class="line">lock <span class="keyword">table</span> table_name read;<span class="comment">--共享锁</span></span><br><span class="line">lock <span class="keyword">table</span> table_name write;<span class="comment">--排他锁</span></span><br><span class="line"><span class="comment">--</span></span><br><span class="line"><span class="comment">--解锁</span></span><br><span class="line">unlock table_name;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">--行锁模式</span></span><br><span class="line"><span class="comment">--加行锁</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> tab_name where...lock <span class="keyword">in</span> share mode;<span class="comment">--加共享锁(in share mode)</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> tab_name where...for <span class="keyword">update</span>;<span class="comment">--加排他锁(for update)</span></span><br></pre></td></tr></table></figure>
+
+<p><code>提醒：共享锁可以多个事务同时对同一个数据加锁，排他锁一次性只能由一个事务对数据对象加锁</code></p>
+<h3 id="死锁的三种情况及解决办法"><a href="#死锁的三种情况及解决办法" class="headerlink" title="死锁的三种情况及解决办法"></a>死锁的三种情况及解决办法</h3><ol>
+<li>第一种情况：<br>用户甲访问表 A（锁住了 A），然后访问表 B；用户乙访问表 B（锁住了 B），然后访问表 A；由于表 B 被用户乙锁住，用户甲必须等用户乙释放表 B 才能继续，同样由于表 A 被甲锁住，用户乙必须等用户甲释放表 A 才能继续，从而产生了死锁。<br><strong><code>解决办法：</code></strong><br><code>这种情况是由于程序的bug产生，应分析程序的逻辑，对于数据库的多表操作，应按照相同的顺序进行处理，尽量避免同时锁定两个资源。</code></li>
+<li>第二种情况：<br>用户甲查询一条记录，然后要修改这条记录；这时用户乙修改该条记录；此时用户甲事务里锁的性质欲由共享锁变为排他锁，而用户乙里的排他锁因为甲有共享锁存在，必须等甲释放掉共享锁，而甲因为乙的排他锁而无法变为排他锁也就不可能释放共享锁。<br><strong><code>解决办法：</code></strong><br><code>①对于按钮等控件，单击后使它立即失效，不要让用户重复单击，避免同时对同一条记录进行操作。</code><br><code>②使用乐观锁、悲观锁进行控制</code></li>
+<li>第三种情况：<br>如果在事务中执行了一条不满足条件的 update 语句，则执行全表扫描，把行级锁提升为表级锁，多个这样的事务执行后，很容易产生死锁和阻塞。<br><strong><code>解决办法：</code></strong><br><code>SQL语句中不要使用太复杂的关联多表的查询；使用“执行计划”对SQL语句进行分析，对于有全表扫描的SQL语句，应建立相应的索引进行优化。</code></li>
+</ol>
+]]></content>
+      <categories>
+        <category>数据库</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>SSH连接问题</title>
+    <url>/posts/ssh%E8%BF%9E%E6%8E%A5%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h4
+id="问题1could-not-connect-to-xx.xx.xx.xx-port-22-connection-failed.">问题1：<code>Could not connect to 'xx.xx.xx.xx' (port 22): Connection failed.</code></h4>
+<p><strong>尝试解决：</strong></p>
+<ol type="1">
+<li><p><strong>检查网络连通性：</strong> 执行：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ping xx.xx.xx.xx</span><br></pre></td></tr></table></figure>
+<p>若出现类似：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">来自 100.23.30.48 的回复: 字节=32 时间=207ms TTL=245</span><br></pre></td></tr></table></figure>
+<p>说明网络是可达的。</p></li>
+<li><p><strong>检查 SSH 服务是否启动：</strong> 在目标服务器上执行：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemctl status sshd</span><br></pre></td></tr></table></figure>
+<p>若未运行，启动：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemctl start sshd</span><br><span class="line">systemctl <span class="built_in">enable</span> sshd</span><br></pre></td></tr></table></figure>
+<p>若出现</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh service not found</span><br></pre></td></tr></table></figure>
+<p>表示linux没有安装ssh，安装并启动</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">sudo</span> apt-get update</span><br><span class="line"><span class="built_in">sudo</span> apt-get install openssh-server</span><br><span class="line"><span class="built_in">sudo</span> systemctl start sshd</span><br></pre></td></tr></table></figure></li>
+<li><p><strong>确认端口是否开放（本机与服务器防火墙）：</strong></p>
+<ul>
+<li><p>查看服务器是否监听 22 端口：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">netstat -tulnp | grep 22</span><br></pre></td></tr></table></figure></li>
+<li><p>防火墙放行端口：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port=22/tcp</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure></li>
+</ul></li>
+<li><p><strong>检查是否存在端口映射或 NAT
+转发失败（若使用内网映射）：</strong></p>
+<ul>
+<li>确认路由器或跳板机是否正确转发到真实服务器 IP 与 22 端口。</li>
+</ul></li>
+</ol>
+<hr />
+<h4
+id="问题2ssh-connect-to-host-xx.xx.xx.xx-port-22-network-is-unreachable">问题2：<code>ssh: connect to host xx.xx.xx.xx port 22: Network is unreachable</code></h4>
+<p><strong>尝试解决：</strong></p>
+<ol type="1">
+<li><p><strong>检查本机网段是否正确：</strong> 若本机 IP
+与服务器不在同一网段，无法直连，例如：</p>
+<ul>
+<li>本机：192.23.30.123/24</li>
+<li>服务器：192.23.28.124/24 → 这是两个不同网段，ping
+不通是正常的。</li>
+</ul></li>
+<li><p><strong>解决方式：</strong></p>
+<ul>
+<li><p>改为与服务器同网段的 IP，例如：
+本机设为：192.23.28.123/24</p></li>
+<li><p>或添加静态路由：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">route add -net 10.23.10.0 netmask 255.255.255.0 gw 10.23.30.1</span><br></pre></td></tr></table></figure></li>
+</ul></li>
+<li><p>确认网线/交换机端口正常、未禁用 VLAN。</p></li>
+</ol>
+<hr />
+<h4
+id="问题3warning-remote-host-identification-has-changed">问题3：<code>WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!</code></h4>
+<p><strong>尝试解决：</strong></p>
+<ol type="1">
+<li><p>SSH 记录的服务器指纹与当前不同，可能因为重装系统、IP
+重用等。</p></li>
+<li><p>解决方法：删除旧的指纹：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh-keygen -R xx.xx.xx.xx</span><br></pre></td></tr></table></figure>
+<p>再重新 ssh 即可：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh root@xx.xx.xx.xx</span><br></pre></td></tr></table></figure></li>
+</ol>
+<hr />
+<h4
+id="问题4permission-denied-publickeypassword.">问题4：<code>Permission denied (publickey,password).</code></h4>
+<p><strong>尝试解决：</strong></p>
+<ol type="1">
+<li><p>密码错误 → 尝试重新输入<strong>。</strong></p></li>
+<li><p>公钥认证失败 → 检查 ~/.ssh/authorized_keys 权限：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">chmod</span> 600 ~/.ssh/authorized_keys</span><br><span class="line"><span class="built_in">chmod</span> 700 ~/.ssh</span><br></pre></td></tr></table></figure></li>
+<li><p>确认 sshd 配置：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">vim /etc/ssh/sshd_config</span><br></pre></td></tr></table></figure>
+<p>检查以下项是否启用：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">PubkeyAuthentication yes</span><br><span class="line">PasswordAuthentication yes</span><br></pre></td></tr></table></figure></li>
+</ol>
+<hr />
+<h4
+id="问题5长时间卡住不动卡在-connecting-或卡在-auth">问题5：长时间卡住不动（卡在
+connecting 或卡在 auth）</h4>
+<p><strong>尝试解决：</strong></p>
+<ol type="1">
+<li><p>检查是否被防火墙或安全策略拦截（如云服务器安全组）。</p></li>
+<li><p><strong>排查 DNS </strong>解析问题<strong>：</strong></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh -o <span class="string">&quot;UseDNS=no&quot;</span> -o <span class="string">&quot;GSSAPIAuthentication=no&quot;</span> user@ip</span><br></pre></td></tr></table></figure></li>
+<li><p>服务器负载过高 → 登录不了，需登录后台或控制台排查。</p></li>
+</ol>
+<hr />
+<h4
+id="问题6换端口导致无法连接22被改为其他端口">问题6：换端口导致无法连接（22被改为其他端口）</h4>
+<p>尝试解决：</p>
+<ol type="1">
+<li><p>修改 sshd_config 后需指定端口，例如：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh -p 2222 root@xx.xx.xx.xx</span><br></pre></td></tr></table></figure></li>
+<li><p>放行新端口：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">firewall-cmd --add-port=2222/tcp --permanent</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure></li>
+</ol>
+]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
+      <tags>
+        <tag>ssh连接问题</tag>
+        <tag>远程连接</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>物理增强方法文档</title>
+    <url>/posts/%E7%89%A9%E7%90%86%E5%A2%9E%E5%BC%BA%E6%96%B9%E6%B3%95%E6%96%87%E6%A1%A3/</url>
+    <content><![CDATA[<h4 id="随机遮挡">1. 随机遮挡</h4>
+<ul>
+<li><p><strong>功能</strong>：随机遮挡图像的一部分区域，模拟遮挡、光照不均等真实环境影响。</p></li>
+<li><p><strong>参数</strong>：</p>
+<ul>
+<li>x: 输入图像，形状 [B, N, C, H, W]</li>
+<li>==cutout_ratio==: 遮挡区域相对于图像面积的比例，即图像的40%。</li>
+<li>==cutout_fill==：用于填充遮挡区域的像素值，用于模拟遮挡物颜色。</li>
+<li>==rand_shift==: 遮挡位置的随机偏移程度，相对于图像尺寸。</li>
+<li>==level==: 遮挡应用级别。可选值通常有： -
+‘instance’：对每个实例（每个目标）单独遮挡。 -
+‘batch’：对整个批次使用相同遮挡区域。</li>
+<li>==p_erase==: 应用 Cutout 的概率（范围
+0~1）。表示该遮挡操作是否被应用的概率。</li>
+</ul></li>
+<li><p><strong>作用</strong>：增强补丁在部分可见情况下的鲁棒性。</p></li>
+<li><p><strong>代码</strong>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">cutout</span>(<span class="params">self, x: torch.Tensor, cutout_ratio: <span class="built_in">float</span> = <span class="number">0.4</span>, cutout_fill: <span class="built_in">float</span> =<span class="number">0.5</span>,</span></span><br><span class="line"><span class="params">           rand_shift: <span class="built_in">float</span> = -<span class="number">0.05</span>, level: <span class="built_in">str</span> =<span class="string">&#x27;instance&#x27;</span>, p_erase: <span class="built_in">float</span> = <span class="number">0.9</span></span>):</span><br><span class="line">    gate = torch.tensor([<span class="number">0</span>]).bernoulli_(p_erase)</span><br><span class="line">    <span class="keyword">if</span> gate.item() == <span class="number">0</span>: <span class="keyword">return</span> x</span><br><span class="line">    <span class="keyword">assert</span> cutout_fill &gt; <span class="number">0</span>, <span class="string">&#x27;Error! The cutout area can\&#x27;t be filled with 0&#x27;</span></span><br><span class="line">    s = x.size()</span><br><span class="line">    batch_size = s[<span class="number">0</span>]</span><br><span class="line">    lab_len = s[<span class="number">1</span>]</span><br><span class="line">    bboxes_shape = torch.Size((batch_size, lab_len))</span><br><span class="line">    bboxes_size = np.prod([batch_size, lab_len])</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span> level == <span class="string">&quot;instance&quot;</span>:</span><br><span class="line">        target_size = bboxes_size</span><br><span class="line">    <span class="keyword">elif</span> level == <span class="string">&quot;image&quot;</span>:</span><br><span class="line">        target_size = batch_size</span><br><span class="line">    <span class="keyword">elif</span> level == <span class="string">&#x27;batch&#x27;</span>:</span><br><span class="line">        target_size = <span class="number">1</span></span><br><span class="line">    bg = torch.cuda.FloatTensor(bboxes_shape).fill_(cutout_fill)</span><br><span class="line">    bg = <span class="variable language_">self</span>.equal_size(bg, x.size)</span><br><span class="line">  </span><br><span class="line">    angle = torch.cuda.FloatTensor(target_size).fill_(<span class="number">0</span>)</span><br><span class="line">    <span class="keyword">if</span> level != <span class="string">&#x27;instance&#x27;</span>:</span><br><span class="line">        angle = angle.unsqueeze(-<span class="number">1</span>).expand(s[<span class="number">0</span>], s[<span class="number">1</span>]).reshape(-<span class="number">1</span>)</span><br><span class="line">    sin = torch.sin(angle)</span><br><span class="line">    cos = torch.cos(angle)</span><br><span class="line">  </span><br><span class="line">    target_cx = torch.cuda.FloatTensor(target_size).uniform_(rand_shift, <span class="number">1</span>-rand_shift)</span><br><span class="line">    target_cy = torch.cuda.FloatTensor(target_size).uniform_(rand_shift, <span class="number">1</span>-rand_shift)</span><br><span class="line">    <span class="keyword">if</span> level != <span class="string">&#x27;instance&#x27;</span>:</span><br><span class="line">        target_cx = target_cx.unsqueeze(-<span class="number">1</span>).expand(s[<span class="number">0</span>], s[<span class="number">1</span>]).reshape(-<span class="number">1</span>)</span><br><span class="line">        target_cy = target_cy.unsqueeze(-<span class="number">1</span>).expand(s[<span class="number">0</span>], s[<span class="number">1</span>]).reshape(-<span class="number">1</span>)</span><br><span class="line">    tx = (<span class="number">0.5</span> - target_cx) * <span class="number">2</span></span><br><span class="line">    ty = (<span class="number">0.5</span> - target_cy) * <span class="number">2</span></span><br><span class="line">  </span><br><span class="line">    scale = cutout_ratio</span><br><span class="line">    theta = torch.cuda.FloatTensor(bboxes_size, <span class="number">2</span>, <span class="number">3</span>).fill_(<span class="number">0</span>)</span><br><span class="line">    theta[:, <span class="number">0</span>, <span class="number">0</span>] = cos / scale</span><br><span class="line">    theta[:, <span class="number">0</span>, <span class="number">1</span>] = sin / scale</span><br><span class="line">    theta[:, <span class="number">0</span>, <span class="number">2</span>] = tx * cos / scale + ty * sin / scale</span><br><span class="line">    theta[:, <span class="number">1</span>, <span class="number">0</span>] = -sin / scale</span><br><span class="line">    theta[:, <span class="number">1</span>, <span class="number">1</span>] = cos / scale</span><br><span class="line">    theta[:, <span class="number">1</span>, <span class="number">2</span>] = -tx * sin / scale + ty * cos / scale</span><br><span class="line">  </span><br><span class="line">    bg = bg.view(bboxes_size, s[<span class="number">2</span>], s[<span class="number">3</span>], s[<span class="number">4</span>])</span><br><span class="line">    x = x.view(bboxes_size, s[<span class="number">2</span>], s[<span class="number">3</span>], s[<span class="number">4</span>])</span><br><span class="line">    grid = F.affine_grid(theta, bg.shape)</span><br><span class="line">    bg = F.grid_sample(bg, grid)</span><br><span class="line">    </span><br><span class="line">    x_t = torch.where((bg == <span class="number">0</span>), x, bg)</span><br><span class="line">    <span class="keyword">return</span> x_t.view(s[<span class="number">0</span>], s[<span class="number">1</span>], s[<span class="number">2</span>], s[<span class="number">3</span>], s[<span class="number">4</span>])</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="随机偏移">2. 随机偏移</h4>
+<ul>
+<li><p><strong>功能</strong>：对图像进行水平和垂直方向的随机平移。</p></li>
+<li><p><strong>参数</strong>：</p>
+<ul>
+<li>x: 输入图像，形状 [B, N, C, H, W]</li>
+<li>==limited_range==: 控制扰动的“幅度尺度”。</li>
+<li>==rand_shift_rate==: 扰动比例因子，表示扰动范围相对于 limited_range
+的最大比例（如 ±0.05 表示扰动范围为 ±5% 的 limited_range）。</li>
+</ul></li>
+<li><p><strong>作用</strong>：模拟补丁在物理贴附过程中位置偏移的情形。</p></li>
+<li><p><strong>代码</strong></p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">random_shift</span>(<span class="params">self, x, limited_range, rand_shift_rate</span>):</span><br><span class="line">    <span class="keyword">if</span> limited_range.dim() &gt; <span class="number">1</span>:</span><br><span class="line">        limited_range = limited_range.view(-<span class="number">1</span>)</span><br><span class="line">    shift = (limited_range * torch.cuda.FloatTensor(x.size())</span><br><span class="line">             .uniform_(-rand_shift_rate, rand_shift_rate))</span><br><span class="line">    <span class="keyword">return</span> x + shift</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="随机旋转">3. 随机旋转</h4>
+<ul>
+<li><p><strong>功能</strong>：模拟非均匀光照，如从某一方向照射的强光源。</p></li>
+<li><p><strong>参数</strong>：</p>
+<ul>
+<li>x: 输入图像，形状 [B, N, C, H, W]</li>
+<li>==rand_rotate_gate==：是否启用随机旋转。</li>
+<li>==min_rotate_angle==：最小旋转角度（单位为
+<strong>弧度</strong>，非角度），例如 -0.1 表示最小旋转约 -5.7°。</li>
+<li>==max_rotate_angle==：最大旋转角度。</li>
+<li>==scale==：缩放因子，1.0表示不缩放，小于 1 会放大图像，大于 1
+会缩小图像。</li>
+<li>==tx==：水平平移量。</li>
+<li>==ty==：垂直平移量。</li>
+</ul></li>
+<li><p><strong>作用</strong>：模拟现实中的光照变化，包含：亮度调整（Brightness）、对比度调整（Contrast）、阴影模拟（Shadow）</p></li>
+<li><p><strong>代码</strong>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">random_rotate</span>(<span class="params">x: torch.Tensor,</span></span><br><span class="line"><span class="params">                         rand_rotate_gate: <span class="built_in">bool</span>,</span></span><br><span class="line"><span class="params">                         min_rotate_angle: <span class="built_in">float</span>,</span></span><br><span class="line"><span class="params">                         max_rotate_angle: <span class="built_in">float</span>,</span></span><br><span class="line"><span class="params">                         scale: <span class="built_in">float</span> = <span class="number">1.0</span>,</span></span><br><span class="line"><span class="params">                         tx: <span class="built_in">float</span> = <span class="number">0.0</span>,</span></span><br><span class="line"><span class="params">                         ty: <span class="built_in">float</span> = <span class="number">0.0</span></span>):</span><br><span class="line"> </span><br><span class="line">    bboxes_size = x.size(<span class="number">0</span>) * x.size(<span class="number">1</span>)</span><br><span class="line">    angle = torch.cuda.FloatTensor(bboxes_size).fill_(<span class="number">0</span>)</span><br><span class="line">    <span class="keyword">if</span> rand_rotate_gate:</span><br><span class="line">        angle = angle.uniform_(min_rotate_angle, max_rotate_angle)</span><br><span class="line">    sin = torch.sin(angle)</span><br><span class="line">    cos = torch.cos(angle)</span><br><span class="line">    theta = torch.cuda.FloatTensor(bboxes_size, <span class="number">2</span>, <span class="number">3</span>).fill_(<span class="number">0</span>)</span><br><span class="line">    theta[:, <span class="number">0</span>, <span class="number">0</span>] = cos / scale</span><br><span class="line">    theta[:, <span class="number">0</span>, <span class="number">1</span>] = sin / scale</span><br><span class="line">    theta[:, <span class="number">0</span>, <span class="number">2</span>] = tx * cos / scale + ty * sin / scale</span><br><span class="line">    theta[:, <span class="number">1</span>, <span class="number">0</span>] = -sin / scale</span><br><span class="line">    theta[:, <span class="number">1</span>, <span class="number">1</span>] = cos / scale</span><br><span class="line">    theta[:, <span class="number">1</span>, <span class="number">2</span>] = -tx * sin / scale + ty * cos / scale</span><br><span class="line">    s = x.size()</span><br><span class="line">    x = x.view(bboxes_size, s[<span class="number">2</span>], s[<span class="number">3</span>], s[<span class="number">4</span>])</span><br><span class="line">    grid = F.affine_grid(theta, x.shape, align_corners=<span class="literal">False</span>)</span><br><span class="line">    x_t = F.grid_sample(x, grid, align_corners=<span class="literal">False</span>)</span><br><span class="line">    x_t = x_t.view(s[<span class="number">0</span>], s[<span class="number">1</span>], s[<span class="number">2</span>], s[<span class="number">3</span>], s[<span class="number">4</span>])</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> x_t</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="光照增强">4. 光照增强</h4>
+<ul>
+<li><p><strong>功能</strong>：模拟非均匀光照，如从某一方向照射的强光源。</p></li>
+<li><p><strong>参数</strong>：</p>
+<ul>
+<li>x: 输入图像，形状 [B, N, C, H, W]</li>
+<li>==brightness_range==: 亮度扰动范围。</li>
+<li>==contrast_range==: 对比度扰动范围。</li>
+<li>==shadow_prob==: 应用阴影的概率。</li>
+</ul></li>
+<li><p><strong>作用</strong>：模拟现实中的光照变化，包含：亮度调整（Brightness）、对比度调整（Contrast）、阴影模拟（Shadow）</p></li>
+<li><p><strong>代码</strong>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">lighting_augmentation</span>(<span class="params">self, x: torch.Tensor, brightness_range: <span class="built_in">float</span> = <span class="number">0.3</span>,</span></span><br><span class="line"><span class="params">                          contrast_range: <span class="built_in">float</span> = <span class="number">0.3</span>, shadow_prob: <span class="built_in">float</span> = <span class="number">0.3</span></span>):</span><br><span class="line">    bboxes_shape = torch.Size((x.size(<span class="number">0</span>), x.size(<span class="number">1</span>)))</span><br><span class="line"></span><br><span class="line">    brightness = torch.cuda.FloatTensor(bboxes_shape).uniform_(-brightness_range, brightness_range)</span><br><span class="line">    brightness = <span class="variable language_">self</span>.equal_size(brightness, x.size)</span><br><span class="line"></span><br><span class="line">    contrast = torch.cuda.FloatTensor(bboxes_shape).uniform_(<span class="number">1</span> - contrast_range, <span class="number">1</span> + contrast_range)</span><br><span class="line">    contrast = <span class="variable language_">self</span>.equal_size(contrast, x.size)</span><br><span class="line"></span><br><span class="line">    x = contrast * x + brightness</span><br><span class="line">    <span class="keyword">if</span> torch.rand(<span class="number">1</span>).item() &lt; shadow_prob:</span><br><span class="line">        shadow_mask = torch.cuda.FloatTensor(x.size()).uniform_(<span class="number">0.5</span>, <span class="number">1.0</span>)</span><br><span class="line">        x = x * shadow_mask</span><br><span class="line">    <span class="keyword">return</span> torch.clamp(x, <span class="number">0</span>, <span class="number">1</span>)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="模糊增强">5. 模糊增强</h4>
+<p><strong>功能</strong>：应用高斯模糊，模拟拍照时的对焦失误或运动模糊。</p>
+<ul>
+<li><p><strong>参数范围</strong>：</p>
+<ul>
+<li>x: 输入图像，形状 [B, N, C, H, W]。</li>
+<li>==gaussian_prob==：应用高斯模糊的概率。</li>
+<li>==motion_prob==：应用运动模糊的概率。</li>
+<li>==blur_strength==：模糊强度。值越大，模糊越强。</li>
+</ul></li>
+<li><p><strong>作用</strong>：提升补丁在低清晰度图像中的攻击能力。</p></li>
+<li><p><strong>代码</strong>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">blur_augmentation</span>(<span class="params">self, x: torch.Tensor, gaussian_prob: <span class="built_in">float</span> = <span class="number">0.5</span>,</span></span><br><span class="line"><span class="params">                      motion_prob: <span class="built_in">float</span> = <span class="number">0.3</span>, blur_strength: <span class="built_in">float</span> = <span class="number">1.0</span></span>):</span><br><span class="line">    <span class="keyword">if</span> torch.rand(<span class="number">1</span>).item() &lt; gaussian_prob:</span><br><span class="line">        kernel_size = <span class="built_in">int</span>(blur_strength * <span class="number">3</span>) * <span class="number">2</span> + <span class="number">1</span></span><br><span class="line">        sigma = blur_strength</span><br><span class="line">        x = <span class="variable language_">self</span>.apply_gaussian_blur(x, kernel_size, sigma)</span><br><span class="line">    <span class="keyword">if</span> torch.rand(<span class="number">1</span>).item() &lt; motion_prob:</span><br><span class="line">        x = <span class="variable language_">self</span>.apply_motion_blur(x, blur_strength)</span><br><span class="line">    <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">apply_motion_blur</span>(<span class="params">self, x: torch.Tensor, blur_strength: <span class="built_in">float</span> = <span class="number">1.0</span></span>):</span><br><span class="line">    kernel_size = <span class="built_in">max</span>(<span class="number">3</span>, <span class="built_in">int</span>(blur_strength * <span class="number">5</span>))</span><br><span class="line">    <span class="keyword">if</span> kernel_size % <span class="number">2</span> == <span class="number">0</span>:</span><br><span class="line">        kernel_size += <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    kernel = torch.zeros(kernel_size, kernel_size)</span><br><span class="line">    kernel[kernel_size // <span class="number">2</span>, :] = <span class="number">1.0</span> / kernel_size</span><br><span class="line"></span><br><span class="line">    channels = x.size(<span class="number">2</span>)</span><br><span class="line">    kernel = kernel.expand(channels, <span class="number">1</span>, kernel_size, kernel_size).to(x.device)</span><br><span class="line"></span><br><span class="line">    batch_size, lab_len = x.size(<span class="number">0</span>), x.size(<span class="number">1</span>)</span><br><span class="line">    x_flat = x.view(-<span class="number">1</span>, channels, x.size(-<span class="number">2</span>), x.size(-<span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    padding = kernel_size // <span class="number">2</span></span><br><span class="line">    x_blurred = F.conv2d(x_flat, kernel, padding=padding, groups=channels)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> x_blurred.view(batch_size, lab_len, channels, x.size(-<span class="number">2</span>), x.size(-<span class="number">1</span>))</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">apply_gaussian_blur</span>(<span class="params">self, x: torch.Tensor, kernel_size: <span class="built_in">int</span> = <span class="number">5</span>, sigma: <span class="built_in">float</span> = <span class="number">1.0</span></span>):</span><br><span class="line">    channels = x.size(<span class="number">2</span>)</span><br><span class="line">    kernel = <span class="variable language_">self</span>._get_gaussian_kernel(kernel_size, sigma).to(x.device)</span><br><span class="line">    kernel = kernel.expand(channels, <span class="number">1</span>, kernel_size, kernel_size)</span><br><span class="line"></span><br><span class="line">    batch_size, lab_len = x.size(<span class="number">0</span>), x.size(<span class="number">1</span>)</span><br><span class="line">    x_flat = x.view(-<span class="number">1</span>, channels, x.size(-<span class="number">2</span>), x.size(-<span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    padding = kernel_size // <span class="number">2</span></span><br><span class="line">    x_blurred = F.conv2d(x_flat, kernel, padding=padding, groups=channels)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> x_blurred.view(batch_size, lab_len, channels, x.size(-<span class="number">2</span>), x.size(-<span class="number">1</span>))</span><br><span class="line"><span class="keyword">def</span> <span class="title function_">_get_gaussian_kernel</span>(<span class="params">self, kernel_size: <span class="built_in">int</span>, sigma: <span class="built_in">float</span></span>):</span><br><span class="line">    coords = torch.arange(kernel_size, dtype=torch.float32)</span><br><span class="line">    coords -= kernel_size // <span class="number">2</span></span><br><span class="line">    g = torch.exp(-(coords ** <span class="number">2</span>) / (<span class="number">2</span> * sigma ** <span class="number">2</span>))</span><br><span class="line">    g /= g.<span class="built_in">sum</span>()</span><br><span class="line">    <span class="keyword">return</span> g.outer(g).unsqueeze(<span class="number">0</span>).unsqueeze(<span class="number">0</span>)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="相机噪声模拟">6. 相机噪声模拟</h4>
+<ul>
+<li><p><strong>功能</strong>：添加真实感摄像头拍摄噪声，包含：</p>
+<ul>
+<li>高斯噪声</li>
+<li>椒盐噪声</li>
+<li>斑点噪声</li>
+</ul></li>
+<li><p><strong>参数</strong>：</p>
+<ul>
+<li>x: 输入图像，形状[B, N, C, H, W]。</li>
+<li>==noise_type==: ‘gaussian’, ‘speckle’, ‘salt_pepper’。</li>
+<li>==gauss_std==: 高斯噪声标准差。</li>
+<li>==speckle_prob==: 斑点噪声比例。</li>
+<li>==salt_pepper_prob==: 椒盐噪声比例。</li>
+</ul></li>
+<li><p><strong>作用</strong>：模拟不同类型相机及其成像缺陷。</p></li>
+<li><p><strong>代码</strong></p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">camera_noise_augmentation</span>(<span class="params">self, x: torch.Tensor, noise_type: <span class="built_in">str</span> = <span class="string">&#x27;gaussian&#x27;</span>,</span></span><br><span class="line"><span class="params">                              gauss_std: <span class="built_in">float</span> = <span class="number">0.05</span>, speckle_prob: <span class="built_in">float</span> = <span class="number">0.05</span>,</span></span><br><span class="line"><span class="params">                              salt_pepper_prob: <span class="built_in">float</span> = <span class="number">0.01</span></span>):</span><br><span class="line"></span><br><span class="line">    b, n, c, h, w = x.shape</span><br><span class="line">    x_flat = x.view(-<span class="number">1</span>, c, h, w)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> noise_type == <span class="string">&#x27;gaussian&#x27;</span>:</span><br><span class="line">        noise = torch.randn_like(x_flat) * gauss_std</span><br><span class="line">        x_flat = x_flat + noise</span><br><span class="line"></span><br><span class="line">    <span class="keyword">elif</span> noise_type == <span class="string">&#x27;speckle&#x27;</span>:</span><br><span class="line">        noise = torch.randn_like(x_flat) * speckle_prob</span><br><span class="line">        x_flat = x_flat + x_flat * noise</span><br><span class="line"></span><br><span class="line">    <span class="keyword">elif</span> noise_type == <span class="string">&#x27;salt_pepper&#x27;</span>:</span><br><span class="line">        rand = torch.rand_like(x_flat)</span><br><span class="line">        salt = (rand &lt; salt_pepper_prob / <span class="number">2</span>).<span class="built_in">float</span>()</span><br><span class="line">        pepper = (rand &gt; <span class="number">1</span> - salt_pepper_prob / <span class="number">2</span>).<span class="built_in">float</span>()</span><br><span class="line">        mask = <span class="number">1</span> - salt - pepper</span><br><span class="line">        x_flat = x_flat * mask + salt</span><br><span class="line"></span><br><span class="line">    x_flat = torch.clamp(x_flat, <span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> x_flat.view(b, n, c, h, w)</span><br></pre></td></tr></table></figure></li>
+</ul>
+]]></content>
+      <categories>
+        <category>深度学习</category>
+      </categories>
+      <tags>
+        <tag>对抗攻击</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>深度神经网络的对抗攻击及防御方法综述</title>
+    <url>/posts/%E6%99%BA%E8%83%BD%E5%AE%89%E5%85%A8%E5%AD%A6%E4%B9%A0%E6%96%87%E6%A1%A3/</url>
+    <content><![CDATA[<h4 id="引言">引言</h4>
+<p>深度神经网络（DNN）近年来在诸多领域取得了显著成就，特别是在计算机视觉、自然语言处理和语音识别等方面。然而，研究发现DNN对输入数据的微小扰动极为敏感，这些扰动可以被设计成对抗样本，诱使DNN做出错误决策。这不仅对模型的鲁棒性提出了挑战，也对DNN在实际应用中的安全性带来了严重威胁。本文综述了对抗攻击的各种方法及其对应的防御策略。</p>
+<h4 id="一对抗攻击">一、对抗攻击</h4>
+<p>对抗攻击是通过在输入数据中加入细微且人眼难以察觉的扰动，使得深度神经网络输出错误结果的攻击方式。根据攻击方法和攻击者掌握的信息，主要分为以下几类：</p>
+<ol type="1">
+<li><strong>基于梯度的对抗攻击</strong>：
+<ul>
+<li><strong>FGSM（Fast Gradient Sign
+Method）</strong>：利用损失函数相对于输入数据的梯度信息，快速生成对抗样本。公式为：
+$ x_{} = x + (_x J(, x, y)) $</li>
+<li><strong>BIM（Basic Iterative
+Method）</strong>：是FGSM的迭代版，通过多次小步长的扰动累积生成对抗样本。</li>
+</ul></li>
+<li><strong>基于优化的对抗攻击</strong>：
+<ul>
+<li><strong>CW攻击（Carlini &amp;
+Wagner）</strong>：通过优化目标函数生成对抗样本，该方法通过调整对抗扰动的大小和攻击成功率之间的平衡，生成最小化扰动的对抗样本。</li>
+</ul></li>
+<li><strong>基于迁移的对抗攻击</strong>：
+<ul>
+<li>利用在一个模型上生成的对抗样本攻击另一个模型，这种方法利用了不同模型之间的相似性和对抗样本的迁移性。</li>
+</ul></li>
+<li><strong>基于生成对抗网络（GAN）的对抗攻击</strong>：
+<ul>
+<li>通过GAN生成对抗样本，GAN由生成器和判别器组成，生成器生成对抗样本，判别器判断样本是否为真实数据。训练过程中生成器不断优化，生成更具欺骗性的对抗样本。</li>
+</ul></li>
+<li><strong>基于决策边界的对抗攻击</strong>：
+<ul>
+<li>通过分析和研究DNN的决策边界，生成能够跨越决策边界的对抗样本，从而成功欺骗模型。</li>
+</ul></li>
+</ol>
+<h4 id="二对抗攻击防御方法">二、对抗攻击防御方法</h4>
+<p>为了应对对抗攻击，研究者们提出了多种防御策略，这些方法可以分为以下几类：</p>
+<ol type="1">
+<li><strong>基于数据预处理的防御方法</strong>：
+<ul>
+<li><strong>输入数据的预处理</strong>：如对输入图像进行高斯模糊、随机噪声注入、图像压缩等方法，可以在一定程度上减弱对抗样本的影响。</li>
+<li><strong>数据增强</strong>：通过增加训练数据的多样性，提高模型的泛化能力和鲁棒性。</li>
+</ul></li>
+<li><strong>增强模型鲁棒性的防御方法</strong>：
+<ul>
+<li><strong>对抗训练</strong>：将对抗样本和正常样本一起用于模型训练，使模型在训练过程中学会识别和抵抗对抗攻击。这是目前较为有效的防御方法之一。</li>
+<li><strong>正则化方法</strong>：如Dropout、权重衰减等，通过增加模型训练过程中的约束，提高模型的鲁棒性。</li>
+</ul></li>
+<li><strong>对抗样本检测</strong>：
+<ul>
+<li><strong>基于统计特征的方法</strong>：通过统计分析输入数据的特征，检测对抗样本。例如，分析输入数据的均值和方差。</li>
+<li><strong>基于模型不确定性的方法</strong>：利用模型对输入数据的不确定性估计，检测可能的对抗样本。</li>
+<li><strong>基于独立模型的方法</strong>：训练一个专门的检测器，识别和过滤对抗样本，防止其进入主模型。</li>
+</ul></li>
+<li><strong>模型结构改进</strong>：
+<ul>
+<li>通过改进模型结构，提高其对对抗样本的抵抗能力。例如，使用更复杂的网络结构、增加模型的层数、引入自注意力机制等。</li>
+</ul></li>
+</ol>
+<h4 id="三对抗攻击与防御实例">三、对抗攻击与防御实例</h4>
+<ol type="1">
+<li><strong>语义分割</strong>：
+<ul>
+<li>对抗样本可以使语义分割模型输出错误的分割结果，影响自动驾驶中的目标检测和场景理解。</li>
+</ul></li>
+<li><strong>音频处理</strong>：
+<ul>
+<li>在语音识别系统中，对抗样本可以使模型错误地识别语音内容，造成严重后果。</li>
+</ul></li>
+<li><strong>文本识别</strong>：
+<ul>
+<li>对抗样本可以使自然语言处理模型输出错误的文本分类或情感分析结果。</li>
+</ul></li>
+<li><strong>目标检测</strong>：
+<ul>
+<li>在物体检测任务中，对抗样本可以使DNN错过重要目标或检测出虚假的目标。</li>
+</ul></li>
+<li><strong>人脸识别</strong>：
+<ul>
+<li>对抗样本可以使人脸识别系统错误地识别身份，威胁安全系统。</li>
+</ul></li>
+<li><strong>强化学习</strong>：
+<ul>
+<li>对抗样本可以干扰强化学习算法的训练和决策过程，导致其输出错误的策略。</li>
+</ul></li>
+</ol>
+<h4 id="四未来发展趋势">四、未来发展趋势</h4>
+<p>对抗攻击和防御方法的研究仍在不断发展，未来的研究方向可能包括：</p>
+<ol type="1">
+<li><strong>更强的攻击方法</strong>：
+<ul>
+<li>开发更加隐蔽和有效的对抗攻击算法，特别是针对现有防御方法的改进版本。</li>
+</ul></li>
+<li><strong>更鲁棒的防御方法</strong>：
+<ul>
+<li>提高防御方法的泛化能力，使其在不同类型的攻击下都能有效。</li>
+</ul></li>
+<li><strong>跨领域应用</strong>：
+<ul>
+<li>将对抗攻击和防御方法应用于更多领域，如金融、医疗等，提升DNN在各领域的安全性。</li>
+</ul></li>
+<li><strong>理论研究</strong>：
+<ul>
+<li>深入研究对抗攻击的理论基础，揭示其本质规律，为设计有效防御方法提供理论支持。</li>
+</ul></li>
+</ol>
+<hr />
+<h3 id="白盒攻击详述">白盒攻击详述</h3>
+<p><strong>白盒攻击</strong>是指攻击者对目标模型的结构、参数以及训练数据有完全的了解。这类攻击利用模型的内部信息，通过优化方法找到最小的扰动，使得模型在处理这些扰动后的输入时产生错误输出。</p>
+<h4 id="主要白盒攻击方法">主要白盒攻击方法</h4>
+<ol type="1">
+<li><p><strong>FGSM（Fast Gradient Sign Method）</strong></p>
+<ul>
+<li><strong>原理</strong>：FGSM是一种基于梯度的对抗攻击方法。其基本思想是通过计算损失函数相对于输入的梯度，生成一个方向，使输入在该方向上稍微移动就能最大化损失，从而生成对抗样本。</li>
+<li><strong>公式</strong>： <span
+class="math display"><em>x</em><sub>adv</sub> = <em>x</em> + <em>ϵ</em> ⋅ sign(∇<sub><em>x</em></sub><em>J</em>(<em>θ</em>, <em>x</em>, <em>y</em>))</span>
+其中，($ x$ ) 为原始输入，( <span class="math inline"><em>ϵ</em></span>
+) 为扰动强度，( <span
+class="math inline"><em>J</em>(<em>θ</em>, <em>x</em>, <em>y</em>)</span>
+) 为损失函数，( <span
+class="math inline">∇<sub><em>x</em></sub><em>J</em></span> )
+为损失函数关于输入 ( <span class="math inline"><em>x</em></span> )
+的梯度。</li>
+<li><strong>优点</strong>：计算简单，生成对抗样本速度快。</li>
+<li><strong>缺点</strong>：扰动较大时容易被人眼察觉，对某些防御机制的鲁棒性较低。</li>
+</ul></li>
+<li><p><strong>PGD（Projected Gradient Descent）</strong></p>
+<ul>
+<li><strong>原理</strong>：PGD是FGSM的多步迭代版本。它通过多次小步的FGSM攻击，逐步优化对抗样本。</li>
+<li><strong>过程</strong>：
+<ol type="1">
+<li>初始化：( <span
+class="math inline"><em>x</em><sub>0</sub> = <em>x</em></span> )</li>
+<li>迭代更新：( <span
+class="math inline"><em>x</em><sub><em>k</em> + 1</sub> = Proj<sub><em>x</em>, <em>ϵ</em></sub>(<em>x</em><sub><em>k</em></sub> + <em>α</em> ⋅ sign(∇<sub><em>x</em></sub><em>J</em>(<em>θ</em>, <em>x</em><sub><em>k</em></sub>, <em>y</em>)))</span>
+)</li>
+<li>迭代次数 ( K ) 达到预定值时，停止。 其中，( <span
+class="math inline">Proj<sub><em>x</em>, <em>ϵ</em></sub></span> )
+表示将 ( <span class="math inline"><em>x</em></span> ) 投影回 ( <span
+class="math inline"><em>ϵ</em></span> ) 范围内。</li>
+</ol></li>
+<li><strong>优点</strong>：通过多步优化，可以找到更有效的对抗样本。</li>
+<li><strong>缺点</strong>：计算开销大，生成对抗样本时间较长。</li>
+</ul></li>
+<li><p><strong>MI-FGSM(momentum iterative FGSM，MI-FGSM)</strong></p>
+<ul>
+<li><strong>基本思想</strong>：MI-FGSM 将动量引入到 FGSM
+中，通过在每一步迭代中累积梯度的动量，生成更强的对抗样本。其核心思想是在每一步迭代中，利用动量来平滑和加速梯度更新。</li>
+<li><strong>公式</strong>：</li>
+</ul>
+<p><span class="math display">$$
+\begin{aligned}
+&amp;g_0 = 0, \quad x_{\text{adv}}^0 = x \\
+&amp;g_{t+1} = \mu \cdot g_t + \frac{\nabla_x
+\mathcal{L}(f(x_{\text{adv}}^t), y)}{\|\nabla_x
+\mathcal{L}(f(x_{\text{adv}}^t), y)\|_1} \\
+&amp;x_{\text{adv}}^{t+1} = \text{Clip}_{x, \epsilon}\{x_{\text{adv}}^t
++ \alpha \cdot \text{sign}(g_{t+1})\}
+\end{aligned}
+$$</span></p>
+<ul>
+<li><strong>引入动量好处</strong>：
+<ol type="1">
+<li>抑制局部抖动</li>
+<li>加快收敛速度</li>
+<li>增强攻击效果</li>
+<li>提高鲁棒性</li>
+</ol></li>
+</ul></li>
+<li><p><strong>CW攻击（Carlini &amp; Wagner攻击）</strong></p>
+<ul>
+<li><strong>原理</strong>：CW攻击通过优化特定目标函数，直接最小化扰动的同时保证输入被误分类。其目标函数设计巧妙，通常比FGSM和PGD更有效。</li>
+<li><strong>目标函数</strong>： $ | |_p + c f(x + ) $ 其中，($ $ )
+为扰动，( <span
+class="math inline"><em>f</em>(<em>x</em> + <em>δ</em>)</span> )
+为衡量对抗样本 ( <span
+class="math inline"><em>x</em> + <em>δ</em></span> ) 成功误分类的函数，(
+<span class="math inline"><em>c</em></span> ) 为权重。</li>
+<li><strong>优点</strong>：扰动小，难以被人眼察觉，对防御机制鲁棒性较高。</li>
+<li><strong>缺点</strong>：优化过程复杂，计算开销大。</li>
+</ul></li>
+</ol>
+<h4 id="白盒攻击的效果和影响">白盒攻击的效果和影响</h4>
+<ol type="1">
+<li><strong>误分类攻击</strong>：攻击者通过白盒攻击生成对抗样本，使模型将其误分类。例如，在图像分类任务中，将“猫”图片误分类为“狗”。</li>
+<li><strong>目标攻击</strong>：攻击者有特定目标类，通过白盒攻击使对抗样本被分类为该目标类。例如，将任何输入都分类为“停止标志”。</li>
+<li><strong>泛化攻击</strong>：生成的对抗样本不仅能攻击训练模型，还能攻击其他相似模型，提高攻击的泛化能力。</li>
+</ol>
+<h4 id="白盒攻击的挑战">白盒攻击的挑战</h4>
+<ol type="1">
+<li><strong>计算复杂性</strong>：白盒攻击通常需要计算梯度，优化过程复杂，计算资源消耗大。</li>
+<li><strong>防御机制</strong>：模型防御机制的提升，如对抗训练、梯度掩蔽等，会增加攻击难度。</li>
+<li><strong>可解释性</strong>：如何解释和理解对抗样本的生成机制以及其对模型的影响仍然是一个研究热点。</li>
+</ol>
+<p>通过深入理解白盒攻击及其机制，可以更好地设计防御策略，提高深度神经网络的鲁棒性和安全性。</p>
+]]></content>
+      <categories>
+        <category>深度学习</category>
+        <category>对抗攻击</category>
+      </categories>
+  </entry>
+</search>
