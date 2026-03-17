@@ -383,7 +383,7 @@ alt="img" />
 <li>如果使用 execute()方法执行的是查询语句，那么还要调用<code>Resultset getResultset()</code>来获取 select 语句的查询结果。</li>
 </ol>
 </blockquote>
-<h3 id="4-ResultSet-滚动结果集"><a href="#4-ResultSet-滚动结果集" class="headerlink" title="4.ResultSet 滚动结果集"></a>4.ResultSet 滚动结果集</h3><p><img src="/./jdbc%E5%85%A5%E9%97%A8/c16be33b33460aa17dc3194f5cb3ed55.png" alt="img"></p>
+<h3 id="4-ResultSet-滚动结果集"><a href="#4-ResultSet-滚动结果集" class="headerlink" title="4.ResultSet 滚动结果集"></a>4.ResultSet 滚动结果集</h3><p><img src="/posts/jdbc%E5%85%A5%E9%97%A8/c16be33b33460aa17dc3194f5cb3ed55.png" alt="img"></p>
 <p>获取结果集元数据!</p>
 <ol>
 <li><p>得到元数据:<code>rs.getMetaData()</code>，返回值为<code>ResultSetMetaData</code></p>
