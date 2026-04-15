@@ -1,0 +1,538 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>02 提示词模板 | Robin's Blog</title><meta name="author" content="lxbing"><meta name="copyright" content="lxbing"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="02 - Prompt Templates: 提示词模板学习目标通过本模块，你将学习：  为什么需要提示词模板  字符串拼接的问题 模板的优势   PromptTemplate  基本用法 变量替换 格式化方法   ChatPromptTemplate  聊天消息模板 多角色支持 对话历史管理   高级特性  部分变量 模板组合 可复用模板库   LCEL 链式调用  模板与模型的组合 管道运算符">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02 提示词模板">
+<meta property="og:url" content="https://robin-lxbing.github.io/posts/LangChain-study/02%20-%20Prompt%20Templates%20%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF/">
+<meta property="og:site_name" content="Robin&#39;s Blog">
+<meta property="og:description" content="02 - Prompt Templates: 提示词模板学习目标通过本模块，你将学习：  为什么需要提示词模板  字符串拼接的问题 模板的优势   PromptTemplate  基本用法 变量替换 格式化方法   ChatPromptTemplate  聊天消息模板 多角色支持 对话历史管理   高级特性  部分变量 模板组合 可复用模板库   LCEL 链式调用  模板与模型的组合 管道运算符">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://robin-lxbing.github.io/image/tx.jpg">
+<meta property="article:published_time" content="2026-04-02T10:11:06.000Z">
+<meta property="article:modified_time" content="2026-04-15T07:22:21.427Z">
+<meta property="article:author" content="lxbing">
+<meta property="article:tag" content="AI开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://robin-lxbing.github.io/image/tx.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "02 提示词模板",
+  "url": "https://robin-lxbing.github.io/posts/LangChain-study/02%20-%20Prompt%20Templates%20%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF/",
+  "image": "https://robin-lxbing.github.io/image/tx.jpg",
+  "datePublished": "2026-04-02T10:11:06.000Z",
+  "dateModified": "2026-04-15T07:22:21.427Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "lxbing",
+      "url": "https://robin-lxbing.github.io/"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/image/favicon.ico"><link rel="canonical" href="https://robin-lxbing.github.io/posts/LangChain-study/02%20-%20Prompt%20Templates%20%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":400,"highlightFullpage":true,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '02 提示词模板',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/image/tx.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">19</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">10</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">12</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/image/bgi2.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Robin's Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">02 提示词模板</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">02 提示词模板</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-04-02T10:11:06.000Z" title="发表于 2026-04-02 18:11:06">2026-04-02</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-04-15T07:22:21.427Z" title="更新于 2026-04-15 15:22:21">2026-04-15</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%AD%A6%E4%B9%A0%E6%96%87%E6%A1%A3/">学习文档</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.1k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>13分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h1 id="02-Prompt-Templates-提示词模板"><a href="#02-Prompt-Templates-提示词模板" class="headerlink" title="02 - Prompt Templates: 提示词模板"></a>02 - Prompt Templates: 提示词模板</h1><h2 id="学习目标"><a href="#学习目标" class="headerlink" title="学习目标"></a>学习目标</h2><p>通过本模块，你将学习：</p>
+<ol>
+<li><p><strong>为什么需要提示词模板</strong></p>
+<ul>
+<li>字符串拼接的问题</li>
+<li>模板的优势</li>
+</ul>
+</li>
+<li><p><strong>PromptTemplate</strong></p>
+<ul>
+<li>基本用法</li>
+<li>变量替换</li>
+<li>格式化方法</li>
+</ul>
+</li>
+<li><p><strong>ChatPromptTemplate</strong></p>
+<ul>
+<li>聊天消息模板</li>
+<li>多角色支持</li>
+<li>对话历史管理</li>
+</ul>
+</li>
+<li><p><strong>高级特性</strong></p>
+<ul>
+<li>部分变量</li>
+<li>模板组合</li>
+<li>可复用模板库</li>
+</ul>
+</li>
+<li><p><strong>LCEL 链式调用</strong></p>
+<ul>
+<li>模板与模型的组合</li>
+<li>管道运算符</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="核心概念详解"><a href="#核心概念详解" class="headerlink" title="核心概念详解"></a>核心概念详解</h2><h3 id="1-为什么需要提示词模板？"><a href="#1-为什么需要提示词模板？" class="headerlink" title="1. 为什么需要提示词模板？"></a>1. 为什么需要提示词模板？</h3><h4 id="🔴-问题：字符串拼接的缺点"><a href="#🔴-问题：字符串拼接的缺点" class="headerlink" title="🔴 问题：字符串拼接的缺点"></a>🔴 问题：字符串拼接的缺点</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ❌ 不推荐的做法</span></span><br><span class="line">user_name = <span class="string">&quot;张三&quot;</span></span><br><span class="line">topic = <span class="string">&quot;Python&quot;</span></span><br><span class="line"></span><br><span class="line">prompt = <span class="string">f&quot;你好 <span class="subst">&#123;user_name&#125;</span>，我来帮你学习 <span class="subst">&#123;topic&#125;</span>&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>问题：</strong></p>
+<ul>
+<li>❌ 难以维护和修改</li>
+<li>❌ 容易出现格式错误</li>
+<li>❌ 不能复用</li>
+<li>❌ 难以测试</li>
+<li>❌ 混合了逻辑和数据</li>
+</ul>
+<h4 id="✅-解决方案：使用模板"><a href="#✅-解决方案：使用模板" class="headerlink" title="✅ 解决方案：使用模板"></a>✅ 解决方案：使用模板</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ✅ 推荐的做法</span></span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"></span><br><span class="line">template = PromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;你好 &#123;user_name&#125;，我来帮你学习 &#123;topic&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">prompt = template.<span class="built_in">format</span>(user_name=<span class="string">&quot;张三&quot;</span>, topic=<span class="string">&quot;Python&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><strong>优势：</strong></p>
+<ul>
+<li>✅ <strong>可复用</strong> - 一个模板，多次使用</li>
+<li>✅ <strong>可维护</strong> - 模板和数据分离</li>
+<li>✅ <strong>类型安全</strong> - 自动验证变量</li>
+<li>✅ <strong>可测试</strong> - 更容易编写测试</li>
+<li>✅ <strong>可组合</strong> - 可以组合多个模板</li>
+</ul>
+<hr>
+<h3 id="2-PromptTemplate-简单文本模板"><a href="#2-PromptTemplate-简单文本模板" class="headerlink" title="2. PromptTemplate - 简单文本模板"></a>2. PromptTemplate - 简单文本模板</h3><p><code>PromptTemplate</code> 用于创建<strong>简单的文本提示词</strong>，适合单一提示的场景。</p>
+<h4 id="基本语法"><a href="#基本语法" class="headerlink" title="基本语法"></a>基本语法</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法 1：from_template（最简单，推荐）</span></span><br><span class="line">template = PromptTemplate.from_template(<span class="string">&quot;你的模板文本 &#123;变量名&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法 2：完整定义</span></span><br><span class="line">template = PromptTemplate(</span><br><span class="line">    input_variables=[<span class="string">&quot;变量1&quot;</span>, <span class="string">&quot;变量2&quot;</span>],</span><br><span class="line">    template=<span class="string">&quot;你的模板文本 &#123;变量1&#125; 和 &#123;变量2&#125;&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h4 id="创建模板的三种方法"><a href="#创建模板的三种方法" class="headerlink" title="创建模板的三种方法"></a>创建模板的三种方法</h4><p><strong>方法 1：from_template（推荐）</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">template = PromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;将以下文本翻译成&#123;language&#125;：\n&#123;text&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动识别变量</span></span><br><span class="line"><span class="built_in">print</span>(template.input_variables)  <span class="comment"># [&#x27;language&#x27;, &#x27;text&#x27;]</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>方法 2：显式指定变量</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">template = PromptTemplate(</span><br><span class="line">    input_variables=[<span class="string">&quot;product&quot;</span>, <span class="string">&quot;feature&quot;</span>],</span><br><span class="line">    template=<span class="string">&quot;为&#123;product&#125;写一句广告语，重点突出&#123;feature&#125;特点。&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法 3：部分变量预填充</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">template = PromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;你是一个&#123;role&#125;，请&#123;task&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 预填充 role</span></span><br><span class="line">partial_template = template.partial(role=<span class="string">&quot;Python 导师&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 现在只需要提供 task</span></span><br><span class="line">prompt = partial_template.<span class="built_in">format</span>(task=<span class="string">&quot;解释装饰器&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="使用模板"><a href="#使用模板" class="headerlink" title="使用模板"></a>使用模板</h4><p><strong>方式 1：format() - 返回字符串</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">template = PromptTemplate.from_template(<span class="string">&quot;你好 &#123;name&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 返回格式化后的字符串</span></span><br><span class="line">prompt_str = template.<span class="built_in">format</span>(name=<span class="string">&quot;张三&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(prompt_str)  <span class="comment"># &quot;你好 张三&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 直接传递给模型</span></span><br><span class="line">response = model.invoke(prompt_str)</span><br></pre></td></tr></table></figure>
+
+<p><strong>方式 2：invoke() - 返回 PromptValue</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">template = PromptTemplate.from_template(<span class="string">&quot;你好 &#123;name&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 返回 PromptValue 对象</span></span><br><span class="line">prompt_value = template.invoke(&#123;<span class="string">&quot;name&quot;</span>: <span class="string">&quot;张三&quot;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取文本</span></span><br><span class="line"><span class="built_in">print</span>(prompt_value.text)  <span class="comment"># &quot;你好 张三&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="实用示例"><a href="#实用示例" class="headerlink" title="实用示例"></a>实用示例</h4><p><strong>示例 1：翻译模板</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">translator = PromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;将以下&#123;source_lang&#125;文本翻译成&#123;target_lang&#125;：\n&#123;text&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">prompt = translator.<span class="built_in">format</span>(</span><br><span class="line">    source_lang=<span class="string">&quot;英语&quot;</span>,</span><br><span class="line">    target_lang=<span class="string">&quot;中文&quot;</span>,</span><br><span class="line">    text=<span class="string">&quot;Hello, how are you?&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p><strong>示例 2：代码生成模板</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">code_generator = PromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;用&#123;language&#125;编写一个&#123;functionality&#125;的函数。\n&quot;</span></span><br><span class="line">    <span class="string">&quot;要求：\n&quot;</span></span><br><span class="line">    <span class="string">&quot;1. &#123;requirement1&#125;\n&quot;</span></span><br><span class="line">    <span class="string">&quot;2. &#123;requirement2&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">prompt = code_generator.<span class="built_in">format</span>(</span><br><span class="line">    language=<span class="string">&quot;Python&quot;</span>,</span><br><span class="line">    functionality=<span class="string">&quot;计算斐波那契数列&quot;</span>,</span><br><span class="line">    requirement1=<span class="string">&quot;使用递归实现&quot;</span>,</span><br><span class="line">    requirement2=<span class="string">&quot;添加类型注解&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-ChatPromptTemplate-聊天消息模板"><a href="#3-ChatPromptTemplate-聊天消息模板" class="headerlink" title="3. ChatPromptTemplate - 聊天消息模板"></a>3. ChatPromptTemplate - 聊天消息模板</h3><p><code>ChatPromptTemplate</code> 用于创建<strong>聊天格式的消息</strong>，支持多种角色（system、user、assistant）。</p>
+<h4 id="为什么需要-ChatPromptTemplate？"><a href="#为什么需要-ChatPromptTemplate？" class="headerlink" title="为什么需要 ChatPromptTemplate？"></a>为什么需要 ChatPromptTemplate？</h4><p><strong>PromptTemplate vs ChatPromptTemplate：</strong></p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>PromptTemplate</th>
+<th>ChatPromptTemplate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>输出格式</td>
+<td>纯文本字符串</td>
+<td>消息列表</td>
+</tr>
+<tr>
+<td>角色支持</td>
+<td>❌ 无</td>
+<td>✅ system&#x2F;user&#x2F;assistant</td>
+</tr>
+<tr>
+<td>对话历史</td>
+<td>❌ 不支持</td>
+<td>✅ 支持</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>简单提示</td>
+<td>聊天、对话、多轮交互</td>
+</tr>
+</tbody></table>
+<h4 id="基本语法-1"><a href="#基本语法-1" class="headerlink" title="基本语法"></a>基本语法</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用元组格式（推荐）</span></span><br><span class="line">template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;系统提示&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;用户消息 &#123;variable&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;assistant&quot;</span>, <span class="string">&quot;AI 回复&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;下一个用户消息&quot;</span>)</span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+
+<h4 id="消息类型"><a href="#消息类型" class="headerlink" title="消息类型"></a>消息类型</h4><table>
+<thead>
+<tr>
+<th>角色字符串</th>
+<th>含义</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;system&quot;</code></td>
+<td>系统消息</td>
+<td>设定 AI 的行为、角色、规则</td>
+</tr>
+<tr>
+<td><code>&quot;user&quot;</code> &#x2F; <code>&quot;human&quot;</code></td>
+<td>用户消息</td>
+<td>用户的输入&#x2F;问题</td>
+</tr>
+<tr>
+<td><code>&quot;assistant&quot;</code> &#x2F; <code>&quot;ai&quot;</code></td>
+<td>AI 消息</td>
+<td>AI 的回复（用于对话历史）</td>
+</tr>
+</tbody></table>
+<h4 id="创建方法"><a href="#创建方法" class="headerlink" title="创建方法"></a>创建方法</h4><p><strong>方法 1：元组格式（最简单，推荐）</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是一个&#123;role&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;question&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">messages = template.format_messages(</span><br><span class="line">    role=<span class="string">&quot;Python 导师&quot;</span>,</span><br><span class="line">    question=<span class="string">&quot;什么是装饰器？&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法 2：字符串简写</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 单独的字符串会被解释为 user 消息</span></span><br><span class="line">template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是助手&quot;</span>),</span><br><span class="line">    <span class="string">&quot;&#123;user_input&#125;&quot;</span>  <span class="comment"># 相当于 (&quot;user&quot;, &quot;&#123;user_input&#125;&quot;)</span></span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法 3：使用 MessagePromptTemplate（高级）</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> (</span><br><span class="line">    SystemMessagePromptTemplate,</span><br><span class="line">    HumanMessagePromptTemplate</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">system_template = SystemMessagePromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;你是一个&#123;role&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line">human_template = HumanMessagePromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;&#123;question&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">template = ChatPromptTemplate.from_messages([</span><br><span class="line">    system_template,</span><br><span class="line">    human_template</span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+
+<h4 id="使用模板-1"><a href="#使用模板-1" class="headerlink" title="使用模板"></a>使用模板</h4><p><strong>方式 1：format_messages() - 返回消息列表</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是&#123;role&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;input&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 返回消息列表</span></span><br><span class="line">messages = template.format_messages(</span><br><span class="line">    role=<span class="string">&quot;助手&quot;</span>,</span><br><span class="line">    <span class="built_in">input</span>=<span class="string">&quot;你好&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 直接传递给模型</span></span><br><span class="line">response = model.invoke(messages)</span><br></pre></td></tr></table></figure>
+
+<p><strong>方式 2：invoke() - 返回 ChatPromptValue</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 返回 ChatPromptValue 对象</span></span><br><span class="line">prompt_value = template.invoke(&#123;</span><br><span class="line">    <span class="string">&quot;role&quot;</span>: <span class="string">&quot;助手&quot;</span>,</span><br><span class="line">    <span class="string">&quot;input&quot;</span>: <span class="string">&quot;你好&quot;</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取消息列表</span></span><br><span class="line">messages = prompt_value.to_messages()</span><br></pre></td></tr></table></figure>
+
+<h4 id="实用示例-1"><a href="#实用示例-1" class="headerlink" title="实用示例"></a>实用示例</h4><p><strong>示例 1：简单聊天</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">chat_template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是一个友好的&#123;role&#125;，擅长&#123;skill&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;question&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">messages = chat_template.format_messages(</span><br><span class="line">    role=<span class="string">&quot;编程导师&quot;</span>,</span><br><span class="line">    skill=<span class="string">&quot;用简单语言解释复杂概念&quot;</span>,</span><br><span class="line">    question=<span class="string">&quot;什么是递归？&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">response = model.invoke(messages)</span><br></pre></td></tr></table></figure>
+
+<p><strong>示例 2：多轮对话</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">conversation_template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是一个&#123;role&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;question1&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;assistant&quot;</span>, <span class="string">&quot;&#123;answer1&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;question2&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">messages = conversation_template.format_messages(</span><br><span class="line">    role=<span class="string">&quot;Python 专家&quot;</span>,</span><br><span class="line">    question1=<span class="string">&quot;什么是列表？&quot;</span>,</span><br><span class="line">    answer1=<span class="string">&quot;列表是 Python 的有序可变集合。&quot;</span>,</span><br><span class="line">    question2=<span class="string">&quot;它和元组有什么区别？&quot;</span>  <span class="comment"># 基于上下文</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p><strong>示例 3：结构化指令</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">structured_template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>,</span><br><span class="line">     <span class="string">&quot;你是一个&#123;domain&#125;专家。\n&quot;</span></span><br><span class="line">     <span class="string">&quot;回答风格：&#123;style&#125;\n&quot;</span></span><br><span class="line">     <span class="string">&quot;回答长度：&#123;length&#125;字以内&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;question&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">messages = structured_template.format_messages(</span><br><span class="line">    domain=<span class="string">&quot;机器学习&quot;</span>,</span><br><span class="line">    style=<span class="string">&quot;技术性强、简洁&quot;</span>,</span><br><span class="line">    length=<span class="string">&quot;100&quot;</span>,</span><br><span class="line">    question=<span class="string">&quot;什么是梯度下降？&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="4-高级特性"><a href="#4-高级特性" class="headerlink" title="4. 高级特性"></a>4. 高级特性</h3><h4 id="4-1-部分变量（Partial-Variables）"><a href="#4-1-部分变量（Partial-Variables）" class="headerlink" title="4.1 部分变量（Partial Variables）"></a>4.1 部分变量（Partial Variables）</h4><p>预填充某些固定不变的变量，创建模板的变体。</p>
+<p><strong>使用场景：</strong></p>
+<ul>
+<li>某些变量在所有调用中都相同</li>
+<li>需要为不同用户&#x2F;场景创建定制模板</li>
+</ul>
+<p><strong>语法：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 原始模板</span></span><br><span class="line">template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是&#123;role&#125;，目标用户是&#123;audience&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;task&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 部分填充</span></span><br><span class="line">customer_support_template = template.partial(</span><br><span class="line">    role=<span class="string">&quot;客服专员&quot;</span>,</span><br><span class="line">    audience=<span class="string">&quot;普通用户&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 现在只需要提供 task</span></span><br><span class="line">messages = customer_support_template.format_messages(</span><br><span class="line">    task=<span class="string">&quot;解释退款政策&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p><strong>实用示例：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 基础翻译模板</span></span><br><span class="line">translator = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是专业翻译，精通&#123;source&#125;和&#123;target&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;翻译：&#123;text&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建英译中的专用模板</span></span><br><span class="line">en_to_zh = translator.partial(source=<span class="string">&quot;英语&quot;</span>, target=<span class="string">&quot;中文&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建中译英的专用模板</span></span><br><span class="line">zh_to_en = translator.partial(source=<span class="string">&quot;中文&quot;</span>, target=<span class="string">&quot;英语&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用</span></span><br><span class="line">messages1 = en_to_zh.format_messages(text=<span class="string">&quot;Hello&quot;</span>)</span><br><span class="line">messages2 = zh_to_en.format_messages(text=<span class="string">&quot;你好&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-2-模板组合"><a href="#4-2-模板组合" class="headerlink" title="4.2 模板组合"></a>4.2 模板组合</h4><p>将多个模板片段组合成复杂的提示词。</p>
+<p><strong>方法 1：字符串组合</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 定义可复用的部分</span></span><br><span class="line">role_part = <span class="string">&quot;你是一个&#123;domain&#125;专家。&quot;</span></span><br><span class="line">style_part = <span class="string">&quot;回答风格：&#123;style&#125;。&quot;</span></span><br><span class="line">constraint_part = <span class="string">&quot;限制：&#123;constraint&#125;。&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 组合</span></span><br><span class="line">full_system = role_part + style_part + constraint_part</span><br><span class="line"></span><br><span class="line">template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, full_system),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;question&#125;&quot;</span>)</span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法 2：使用 + 运算符</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">template1 = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是助手&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">template2 = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;input&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 组合（LangChain 1.0 支持）</span></span><br><span class="line">combined = template1 + template2</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-3-可复用模板库"><a href="#4-3-可复用模板库" class="headerlink" title="4.3 可复用模板库"></a>4.3 可复用模板库</h4><p>在实际项目中，建议创建模板库。</p>
+<p><strong>示例：模板库</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># templates.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">PromptLibrary</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;可复用的提示词模板库&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    TRANSLATOR = ChatPromptTemplate.from_messages([</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是专业翻译，精通&#123;source_lang&#125;和&#123;target_lang&#125;&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;翻译以下文本：\n&#123;text&#125;&quot;</span>)</span><br><span class="line">    ])</span><br><span class="line"></span><br><span class="line">    CODE_REVIEWER = ChatPromptTemplate.from_messages([</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是&#123;language&#125;代码审查专家，重点关注&#123;focus&#125;&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;审查代码：\n```&#123;language&#125;\n&#123;code&#125;\n```&quot;</span>)</span><br><span class="line">    ])</span><br><span class="line"></span><br><span class="line">    SUMMARIZER = ChatPromptTemplate.from_messages([</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是内容摘要专家&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;将以下内容总结为&#123;num&#125;个要点：\n&#123;content&#125;&quot;</span>)</span><br><span class="line">    ])</span><br><span class="line"></span><br><span class="line">    TUTOR = ChatPromptTemplate.from_messages([</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是&#123;subject&#125;导师，学生水平：&#123;level&#125;&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;question&#125;&quot;</span>)</span><br><span class="line">    ])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用</span></span><br><span class="line"><span class="keyword">from</span> templates <span class="keyword">import</span> PromptLibrary</span><br><span class="line"></span><br><span class="line">messages = PromptLibrary.TRANSLATOR.format_messages(</span><br><span class="line">    source_lang=<span class="string">&quot;英语&quot;</span>,</span><br><span class="line">    target_lang=<span class="string">&quot;中文&quot;</span>,</span><br><span class="line">    text=<span class="string">&quot;Hello World&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="5-LCEL-链式调用（预览）"><a href="#5-LCEL-链式调用（预览）" class="headerlink" title="5. LCEL 链式调用（预览）"></a>5. LCEL 链式调用（预览）</h3><p><strong>LCEL</strong> &#x3D; LangChain Expression Language，LangChain 的表达式语言。</p>
+<h4 id="什么是链（Chain）？"><a href="#什么是链（Chain）？" class="headerlink" title="什么是链（Chain）？"></a>什么是链（Chain）？</h4><p>链是将多个组件连接在一起的方式，形成处理流程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">输入 → 模板 → 模型 → 输出</span><br></pre></td></tr></table></figure>
+
+<h4 id="使用管道运算符"><a href="#使用管道运算符" class="headerlink" title="使用管道运算符 |"></a>使用管道运算符 <code>|</code></h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain.chat_models <span class="keyword">import</span> init_chat_model</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建组件</span></span><br><span class="line">template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是&#123;role&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;input&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">model = init_chat_model(<span class="string">&quot;groq:llama-3.3-70b-versatile&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 | 创建链</span></span><br><span class="line">chain = template | model</span><br><span class="line"></span><br><span class="line"><span class="comment"># 直接调用链</span></span><br><span class="line">response = chain.invoke(&#123;</span><br><span class="line">    <span class="string">&quot;role&quot;</span>: <span class="string">&quot;Python 导师&quot;</span>,</span><br><span class="line">    <span class="string">&quot;input&quot;</span>: <span class="string">&quot;什么是装饰器？&quot;</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(response.content)</span><br></pre></td></tr></table></figure>
+
+<h4 id="链的优势"><a href="#链的优势" class="headerlink" title="链的优势"></a>链的优势</h4><table>
+<thead>
+<tr>
+<th>优势</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>简洁</strong></td>
+<td>一行代码完成多步操作</td>
+</tr>
+<tr>
+<td><strong>可读</strong></td>
+<td>清晰展示数据流向</td>
+</tr>
+<tr>
+<td><strong>可组合</strong></td>
+<td>可以轻松添加&#x2F;删除组件</td>
+</tr>
+<tr>
+<td><strong>可复用</strong></td>
+<td>链本身可以作为组件</td>
+</tr>
+</tbody></table>
+<p><strong>详细内容将在后续模块学习。</strong></p>
+<hr>
+<h2 id="完整示例代码说明"><a href="#完整示例代码说明" class="headerlink" title="完整示例代码说明"></a>完整示例代码说明</h2><p><code>main.py</code> 包含 9 个渐进式示例：</p>
+<ol>
+<li><strong>示例 1</strong> - 为什么需要模板？对比字符串拼接</li>
+<li><strong>示例 2</strong> - PromptTemplate 基础（3种创建方法）</li>
+<li><strong>示例 3</strong> - ChatPromptTemplate 基础（3种创建方法）</li>
+<li><strong>示例 4</strong> - 多轮对话模板</li>
+<li><strong>示例 5</strong> - MessagePromptTemplate 类（高级）</li>
+<li><strong>示例 6</strong> - 部分变量预填充</li>
+<li><strong>示例 7</strong> - 模板组合</li>
+<li><strong>示例 8</strong> - 可复用模板库</li>
+<li><strong>示例 9</strong> - LCEL 链式调用</li>
+</ol>
+<hr>
+<h2 id="运行示例"><a href="#运行示例" class="headerlink" title="运行示例"></a>运行示例</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> phase1_fundamentals/02_prompt_templates</span><br><span class="line">python main.py</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="常见问题-FAQ"><a href="#常见问题-FAQ" class="headerlink" title="常见问题 (FAQ)"></a>常见问题 (FAQ)</h2><h3 id="Q1-PromptTemplate-和-ChatPromptTemplate-有什么区别"><a href="#Q1-PromptTemplate-和-ChatPromptTemplate-有什么区别" class="headerlink" title="Q1: PromptTemplate 和 ChatPromptTemplate 有什么区别?"></a>Q1: PromptTemplate 和 ChatPromptTemplate 有什么区别?</h3><p><strong>A:</strong></p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>PromptTemplate</th>
+<th>ChatPromptTemplate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>输出</td>
+<td>字符串</td>
+<td>消息列表</td>
+</tr>
+<tr>
+<td>角色</td>
+<td>无</td>
+<td>system&#x2F;user&#x2F;assistant</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>简单提示</td>
+<td>聊天、对话</td>
+</tr>
+</tbody></table>
+<p><strong>建议：</strong></p>
+<ul>
+<li>简单场景 → <code>PromptTemplate</code></li>
+<li>聊天场景 → <code>ChatPromptTemplate</code>（推荐）</li>
+</ul>
+<h3 id="Q2-什么时候使用部分变量？"><a href="#Q2-什么时候使用部分变量？" class="headerlink" title="Q2: 什么时候使用部分变量？"></a>Q2: 什么时候使用部分变量？</h3><p><strong>A:</strong> 当某些变量在多次调用中保持不变时：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 场景：为不同部门创建专用模板</span></span><br><span class="line">base_template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是&#123;department&#125;的&#123;role&#125;&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;task&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line"><span class="comment"># IT 部门</span></span><br><span class="line">it_template = base_template.partial(</span><br><span class="line">    department=<span class="string">&quot;IT 部门&quot;</span>,</span><br><span class="line">    role=<span class="string">&quot;技术支持&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 销售部门</span></span><br><span class="line">sales_template = base_template.partial(</span><br><span class="line">    department=<span class="string">&quot;销售部门&quot;</span>,</span><br><span class="line">    role=<span class="string">&quot;销售顾问&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Q3-如何在模板中使用换行和特殊字符？"><a href="#Q3-如何在模板中使用换行和特殊字符？" class="headerlink" title="Q3: 如何在模板中使用换行和特殊字符？"></a>Q3: 如何在模板中使用换行和特殊字符？</h3><p><strong>A:</strong> 使用三引号字符串：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">template = PromptTemplate.from_template(<span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">你是一个&#123;role&#125;。</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">请完成以下任务：</span></span><br><span class="line"><span class="string">1. &#123;task1&#125;</span></span><br><span class="line"><span class="string">2. &#123;task2&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">注意事项：</span></span><br><span class="line"><span class="string">- &#123;note1&#125;</span></span><br><span class="line"><span class="string">- &#123;note2&#125;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Q4-模板变量可以是什么类型？"><a href="#Q4-模板变量可以是什么类型？" class="headerlink" title="Q4: 模板变量可以是什么类型？"></a>Q4: 模板变量可以是什么类型？</h3><p><strong>A:</strong> 通常是字符串，但也可以是其他可转换为字符串的类型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">template = PromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;生成&#123;count&#125;个关于&#123;topic&#125;的想法&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># count 是整数</span></span><br><span class="line">prompt = template.<span class="built_in">format</span>(count=<span class="number">5</span>, topic=<span class="string">&quot;创新&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Q5-如何处理可选变量？"><a href="#Q5-如何处理可选变量？" class="headerlink" title="Q5: 如何处理可选变量？"></a>Q5: 如何处理可选变量？</h3><p><strong>A:</strong> 使用部分变量或默认值：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法 1：部分变量</span></span><br><span class="line">template = PromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;&#123;greeting&#125; &#123;name&#125;，&#123;message&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line">template_with_default = template.partial(greeting=<span class="string">&quot;你好&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法 2：在应用层处理</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">create_prompt</span>(<span class="params">name, message, greeting=<span class="string">&quot;你好&quot;</span></span>):</span><br><span class="line">    <span class="keyword">return</span> template.<span class="built_in">format</span>(</span><br><span class="line">        greeting=greeting,</span><br><span class="line">        name=name,</span><br><span class="line">        message=message</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><h3 id="1-模板命名规范"><a href="#1-模板命名规范" class="headerlink" title="1. 模板命名规范"></a>1. 模板命名规范</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ✅ 好的命名</span></span><br><span class="line">translator_template = ...</span><br><span class="line">code_review_template = ...</span><br><span class="line">customer_support_template = ...</span><br><span class="line"></span><br><span class="line"><span class="comment"># ❌ 不好的命名</span></span><br><span class="line">template1 = ...</span><br><span class="line">t = ...</span><br><span class="line">my_template = ...</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-组织模板"><a href="#2-组织模板" class="headerlink" title="2. 组织模板"></a>2. 组织模板</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># templates/</span></span><br><span class="line"><span class="comment"># ├── __init__.py</span></span><br><span class="line"><span class="comment"># ├── common.py        # 通用模板</span></span><br><span class="line"><span class="comment"># ├── translation.py   # 翻译相关</span></span><br><span class="line"><span class="comment"># └── coding.py        # 编程相关</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># common.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate</span><br><span class="line"></span><br><span class="line">FRIENDLY_ASSISTANT = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是一个友好的助手&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;&#123;input&#125;&quot;</span>)</span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-文档化模板"><a href="#3-文档化模板" class="headerlink" title="3. 文档化模板"></a>3. 文档化模板</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Templates</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;项目模板库&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    TRANSLATOR = ChatPromptTemplate.from_messages([</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是专业翻译&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;user&quot;</span>, <span class="string">&quot;翻译：&#123;text&#125;&quot;</span>)</span><br><span class="line">    ])</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    翻译模板</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    变量:</span></span><br><span class="line"><span class="string">        - text: 要翻译的文本</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    示例:</span></span><br><span class="line"><span class="string">        messages = TRANSLATOR.format_messages(text=&quot;Hello&quot;)</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-测试模板"><a href="#4-测试模板" class="headerlink" title="4. 测试模板"></a>4. 测试模板</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">test_translator_template</span>():</span><br><span class="line">    <span class="string">&quot;&quot;&quot;测试翻译模板&quot;&quot;&quot;</span></span><br><span class="line">    template = PromptLibrary.TRANSLATOR</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 测试变量识别</span></span><br><span class="line">    <span class="keyword">assert</span> <span class="string">&quot;text&quot;</span> <span class="keyword">in</span> template.input_variables</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 测试格式化</span></span><br><span class="line">    messages = template.format_messages(text=<span class="string">&quot;Hello&quot;</span>)</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">len</span>(messages) == <span class="number">2</span></span><br><span class="line">    <span class="keyword">assert</span> messages[<span class="number">0</span>].<span class="built_in">type</span> == <span class="string">&quot;system&quot;</span></span><br><span class="line">    <span class="keyword">assert</span> messages[<span class="number">1</span>].<span class="built_in">type</span> == <span class="string">&quot;user&quot;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="下一步学习"><a href="#下一步学习" class="headerlink" title="下一步学习"></a>下一步学习</h2><p>完成本模块后，继续学习：</p>
+<ol>
+<li><strong>03_messages</strong> - 深入理解消息类型和对话管理</li>
+<li><strong>04_custom_tools</strong> - 创建自定义工具</li>
+<li><strong>05_simple_agent</strong> - 使用 <code>create_agent</code> 构建第一个 Agent</li>
+</ol>
+<hr>
+<h2 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源"></a>参考资源</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/docs/how_to/prompts">LangChain Prompts 文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/api_reference/core/prompts/langchain_core.prompts.chat.ChatPromptTemplate.html">ChatPromptTemplate API</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/docs/concepts/lcel">LCEL 文档</a></li>
+</ul>
+<hr>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://robin-lxbing.github.io/">lxbing</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://robin-lxbing.github.io/posts/LangChain-study/02%20-%20Prompt%20Templates%20%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF/">https://robin-lxbing.github.io/posts/LangChain-study/02%20-%20Prompt%20Templates%20%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://robin-lxbing.github.io" target="_blank">Robin's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AI%E5%BC%80%E5%8F%91/">AI开发</a></div><div class="post-share"><div class="social-share" data-image="/image/tx.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/LangChain-study/03%20-%20Messages%20%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E4%B8%8E%E5%AF%B9%E8%AF%9D%E7%AE%A1%E7%90%86/" title="03 消息类型与对话管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">03 消息类型与对话管理</div></div><div class="info-2"><div class="info-item-1">03 - Messages: 消息类型与对话管理 核心要点（只讲难点） 1. 三种消息类型          角色 字典格式 对象格式 用途     System {"role": "system", ...} SystemMessage(...) 系统提示   User {"role": "user", ...} HumanMessage(...) 用户输入   Assistant {"role": "assistant", ...} AIMessage(...) AI 回复    推荐：直接用字典，简洁！ 123456789101112# ✅ 推荐messages = [    &#123;&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;你是助手&quot;&#125;,    &#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;...</div></div></div></a><a class="pagination-related" href="/posts/LangChain-study/01%20-%20Hello%20LangChain%20%E7%AC%AC%E4%B8%80%E4%B8%AA%20LLM%20%E8%B0%83%E7%94%A8/" title="01 LLM 调用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">01 LLM 调用</div></div><div class="info-2"><div class="info-item-1">01 - Hello LangChain: 第一个 LLM 调用学习目标通过本模块，你将学习：  LangChain 1.0 的核心概念  LangChain 1.0 构建在 LangGraph 运行时之上 统一的模型初始化接口 简化的 API 设计   init_chat_model 函数  如何初始化聊天模型 支持的参数和配置选项 跨模型提供商的统一接口   invoke 方法  同步调用模型 输入格式（字符串、消息列表、字典） 返回值结构   Messages（消息类型）  SystemMessage：系统提示 HumanMessage：用户输入 AIMessage：AI 响应     核心概念详解1. init_chat_model - 模型初始化init_chat_model 是 LangChain 1.0 中用于初始化聊天模型的统一接口。 基本语法123456789from langchain.chat_models import init_chat_modelmodel = init_chat_model(    &quot;provider:model_name&...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/LangChain-study/06%20-%20Agent%20Loop%20(Agent%20%E6%89%A7%E8%A1%8C%E5%BE%AA%E7%8E%AF)/" title="06 Agent 执行循环"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-10</div><div class="info-item-2">06 Agent 执行循环</div></div><div class="info-2"><div class="info-item-1">06 - Agent Loop (Agent 执行循环)核心概念Agent 执行循环 &#x3D; 自动化的”思考-行动-观察”过程 Agent 不是一次性调用，而是一个循环： 1用户问题 → AI 思考 → 调用工具 → 观察结果 → 继续思考 → 最终答案  执行循环详解完整流程1234567891011121314151617181920212223242526┌─────────────┐│ 用户提问    ││ HumanMessage│└──────┬──────┘       ↓┌─────────────┐│ AI 分析问题 ││ 需要工具？  │└──────┬──────┘       ↓ 是┌─────────────┐│ AI 决定调用 ││ AIMessage   ││ (tool_calls)│└──────┬──────┘       ↓┌─────────────┐│ 执行工具    ││ ToolMessage │└──────┬──────┘       ↓┌─────────────┐│ AI 看结果   ││ 生成答案    ││ AIMe...</div></div></div></a><a class="pagination-related" href="/posts/LangChain-study/04%20-%20Custom%20Tools%20(%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B7%A5%E5%85%B7)/" title="04 自定义工具"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-09</div><div class="info-item-2">04 自定义工具</div></div><div class="info-2"><div class="info-item-1">04 - Custom Tools (自定义工具) 核心概念 工具 (Tool) = 给 AI 的函数 使用 @tool 装饰器，让 AI 能调用你的 Python 函数。 @tool 基本用法 123456789101112131415from langchain_core.tools import tool@tooldef get_weather(city: str) -&gt; str:    &quot;&quot;&quot;    获取指定城市的天气信息    参数:        city: 城市名称，如&quot;北京&quot;、&quot;上海&quot;    返回:        天气信息字符串    &quot;&quot;&quot;    # 你的实现    return &quot;晴天，温度 15°C&quot; 关键要点    必需项 说明     @tool 装饰器 声明这是一个工具   docstring AI 读这个来理解工具用途 ⚠️ 非常重要！   类型注解 参数和返回值的类型  ...</div></div></div></a><a class="pagination-related" href="/posts/LangChain-study/01%20-%20Hello%20LangChain%20%E7%AC%AC%E4%B8%80%E4%B8%AA%20LLM%20%E8%B0%83%E7%94%A8/" title="01 LLM 调用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-02</div><div class="info-item-2">01 LLM 调用</div></div><div class="info-2"><div class="info-item-1">01 - Hello LangChain: 第一个 LLM 调用学习目标通过本模块，你将学习：  LangChain 1.0 的核心概念  LangChain 1.0 构建在 LangGraph 运行时之上 统一的模型初始化接口 简化的 API 设计   init_chat_model 函数  如何初始化聊天模型 支持的参数和配置选项 跨模型提供商的统一接口   invoke 方法  同步调用模型 输入格式（字符串、消息列表、字典） 返回值结构   Messages（消息类型）  SystemMessage：系统提示 HumanMessage：用户输入 AIMessage：AI 响应     核心概念详解1. init_chat_model - 模型初始化init_chat_model 是 LangChain 1.0 中用于初始化聊天模型的统一接口。 基本语法123456789from langchain.chat_models import init_chat_modelmodel = init_chat_model(    &quot;provider:model_name&...</div></div></div></a><a class="pagination-related" href="/posts/LangChain-study/05%20-%20Simple%20Agent%20(%E7%AE%80%E5%8D%95%20Agent)/" title="05 简单 Agent 创建"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-10</div><div class="info-item-2">05 简单 Agent 创建</div></div><div class="info-2"><div class="info-item-1">05 - Simple Agent (简单 Agent)核心概念Agent &#x3D; 模型 + 工具 + 自动决策 Agent 的关键能力：  理解用户问题 自动判断是否需要工具 选择合适的工具 基于工具结果生成回答  create_agent 基本用法123456789101112from langchain.agents import create_agentfrom langchain.chat_models import init_chat_modelagent = create_agent(    model=init_chat_model(&quot;groq:llama-3.3-70b-versatile&quot;),    tools=[tool1, tool2],    system_prompt=&quot;Agent 的行为指令&quot;  # 可选)response = agent.invoke(&#123;    &quot;messages&quot;: [&#123;&quot;role&quot;: &quot;user&quot;, &q...</div></div></div></a><a class="pagination-related" href="/posts/LangChain-study/03%20-%20Messages%20%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E4%B8%8E%E5%AF%B9%E8%AF%9D%E7%AE%A1%E7%90%86/" title="03 消息类型与对话管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-07</div><div class="info-item-2">03 消息类型与对话管理</div></div><div class="info-2"><div class="info-item-1">03 - Messages: 消息类型与对话管理 核心要点（只讲难点） 1. 三种消息类型          角色 字典格式 对象格式 用途     System {"role": "system", ...} SystemMessage(...) 系统提示   User {"role": "user", ...} HumanMessage(...) 用户输入   Assistant {"role": "assistant", ...} AIMessage(...) AI 回复    推荐：直接用字典，简洁！ 123456789101112# ✅ 推荐messages = [    &#123;&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;你是助手&quot;&#125;,    &#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/image/tx.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">lxbing</div><div class="author-info-description">后端开发 / 对抗攻击 / 目标检测</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">19</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">10</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">12</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/robin-lxbing"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:lxbing2000@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="http://wpa.qq.com/msgrd?v=3&amp;uin=2506444512&amp;site=qq&amp;menu=yes" target="_blank" title="QQ"><i class="fab fa-qq"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#02-Prompt-Templates-%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.</span> <span class="toc-text">02 - Prompt Templates: 提示词模板</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0%E7%9B%AE%E6%A0%87"><span class="toc-number">1.1.</span> <span class="toc-text">学习目标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E8%AF%A6%E8%A7%A3"><span class="toc-number">1.2.</span> <span class="toc-text">核心概念详解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF%EF%BC%9F"><span class="toc-number">1.2.1.</span> <span class="toc-text">1. 为什么需要提示词模板？</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%F0%9F%94%B4-%E9%97%AE%E9%A2%98%EF%BC%9A%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%8B%BC%E6%8E%A5%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="toc-number">1.2.1.1.</span> <span class="toc-text">🔴 问题：字符串拼接的缺点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E2%9C%85-%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%EF%BC%9A%E4%BD%BF%E7%94%A8%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.2.1.2.</span> <span class="toc-text">✅ 解决方案：使用模板</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-PromptTemplate-%E7%AE%80%E5%8D%95%E6%96%87%E6%9C%AC%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.2.2.</span> <span class="toc-text">2. PromptTemplate - 简单文本模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-number">1.2.2.1.</span> <span class="toc-text">基本语法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%A8%A1%E6%9D%BF%E7%9A%84%E4%B8%89%E7%A7%8D%E6%96%B9%E6%B3%95"><span class="toc-number">1.2.2.2.</span> <span class="toc-text">创建模板的三种方法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.2.2.3.</span> <span class="toc-text">使用模板</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toc-number">1.2.2.4.</span> <span class="toc-text">实用示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-ChatPromptTemplate-%E8%81%8A%E5%A4%A9%E6%B6%88%E6%81%AF%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.2.3.</span> <span class="toc-text">3. ChatPromptTemplate - 聊天消息模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-ChatPromptTemplate%EF%BC%9F"><span class="toc-number">1.2.3.1.</span> <span class="toc-text">为什么需要 ChatPromptTemplate？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95-1"><span class="toc-number">1.2.3.2.</span> <span class="toc-text">基本语法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.2.3.3.</span> <span class="toc-text">消息类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%96%B9%E6%B3%95"><span class="toc-number">1.2.3.4.</span> <span class="toc-text">创建方法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%A8%A1%E6%9D%BF-1"><span class="toc-number">1.2.3.5.</span> <span class="toc-text">使用模板</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%94%A8%E7%A4%BA%E4%BE%8B-1"><span class="toc-number">1.2.3.6.</span> <span class="toc-text">实用示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7"><span class="toc-number">1.2.4.</span> <span class="toc-text">4. 高级特性</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-%E9%83%A8%E5%88%86%E5%8F%98%E9%87%8F%EF%BC%88Partial-Variables%EF%BC%89"><span class="toc-number">1.2.4.1.</span> <span class="toc-text">4.1 部分变量（Partial Variables）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-2-%E6%A8%A1%E6%9D%BF%E7%BB%84%E5%90%88"><span class="toc-number">1.2.4.2.</span> <span class="toc-text">4.2 模板组合</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-3-%E5%8F%AF%E5%A4%8D%E7%94%A8%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-number">1.2.4.3.</span> <span class="toc-text">4.3 可复用模板库</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-LCEL-%E9%93%BE%E5%BC%8F%E8%B0%83%E7%94%A8%EF%BC%88%E9%A2%84%E8%A7%88%EF%BC%89"><span class="toc-number">1.2.5.</span> <span class="toc-text">5. LCEL 链式调用（预览）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E9%93%BE%EF%BC%88Chain%EF%BC%89%EF%BC%9F"><span class="toc-number">1.2.5.1.</span> <span class="toc-text">什么是链（Chain）？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%AE%A1%E9%81%93%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-number">1.2.5.2.</span> <span class="toc-text">使用管道运算符 |</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%93%BE%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="toc-number">1.2.5.3.</span> <span class="toc-text">链的优势</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E7%A4%BA%E4%BE%8B%E4%BB%A3%E7%A0%81%E8%AF%B4%E6%98%8E"><span class="toc-number">1.3.</span> <span class="toc-text">完整示例代码说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E7%A4%BA%E4%BE%8B"><span class="toc-number">1.4.</span> <span class="toc-text">运行示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98-FAQ"><span class="toc-number">1.5.</span> <span class="toc-text">常见问题 (FAQ)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Q1-PromptTemplate-%E5%92%8C-ChatPromptTemplate-%E6%9C%89%E4%BB%80%E4%B9%88%E5%8C%BA%E5%88%AB"><span class="toc-number">1.5.1.</span> <span class="toc-text">Q1: PromptTemplate 和 ChatPromptTemplate 有什么区别?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q2-%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8%E9%83%A8%E5%88%86%E5%8F%98%E9%87%8F%EF%BC%9F"><span class="toc-number">1.5.2.</span> <span class="toc-text">Q2: 什么时候使用部分变量？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q3-%E5%A6%82%E4%BD%95%E5%9C%A8%E6%A8%A1%E6%9D%BF%E4%B8%AD%E4%BD%BF%E7%94%A8%E6%8D%A2%E8%A1%8C%E5%92%8C%E7%89%B9%E6%AE%8A%E5%AD%97%E7%AC%A6%EF%BC%9F"><span class="toc-number">1.5.3.</span> <span class="toc-text">Q3: 如何在模板中使用换行和特殊字符？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q4-%E6%A8%A1%E6%9D%BF%E5%8F%98%E9%87%8F%E5%8F%AF%E4%BB%A5%E6%98%AF%E4%BB%80%E4%B9%88%E7%B1%BB%E5%9E%8B%EF%BC%9F"><span class="toc-number">1.5.4.</span> <span class="toc-text">Q4: 模板变量可以是什么类型？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q5-%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86%E5%8F%AF%E9%80%89%E5%8F%98%E9%87%8F%EF%BC%9F"><span class="toc-number">1.5.5.</span> <span class="toc-text">Q5: 如何处理可选变量？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-number">1.6.</span> <span class="toc-text">最佳实践</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A8%A1%E6%9D%BF%E5%91%BD%E5%90%8D%E8%A7%84%E8%8C%83"><span class="toc-number">1.6.1.</span> <span class="toc-text">1. 模板命名规范</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E7%BB%84%E7%BB%87%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.6.2.</span> <span class="toc-text">2. 组织模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%96%87%E6%A1%A3%E5%8C%96%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.6.3.</span> <span class="toc-text">3. 文档化模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%B5%8B%E8%AF%95%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.6.4.</span> <span class="toc-text">4. 测试模板</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5%E5%AD%A6%E4%B9%A0"><span class="toc-number">1.7.</span> <span class="toc-text">下一步学习</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%BA%90"><span class="toc-number">1.8.</span> <span class="toc-text">参考资源</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/LangChain-study/06%20-%20Agent%20Loop%20(Agent%20%E6%89%A7%E8%A1%8C%E5%BE%AA%E7%8E%AF)/" title="06 Agent 执行循环">06 Agent 执行循环</a><time datetime="2026-04-10T04:12:30.000Z" title="发表于 2026-04-10 12:12:30">2026-04-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/LangChain-study/05%20-%20Simple%20Agent%20(%E7%AE%80%E5%8D%95%20Agent)/" title="05 简单 Agent 创建">05 简单 Agent 创建</a><time datetime="2026-04-10T01:02:45.000Z" title="发表于 2026-04-10 09:02:45">2026-04-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/LangChain-study/04%20-%20Custom%20Tools%20(%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B7%A5%E5%85%B7)/" title="04 自定义工具">04 自定义工具</a><time datetime="2026-04-09T12:40:39.000Z" title="发表于 2026-04-09 20:40:39">2026-04-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/LangChain-study/03%20-%20Messages%20%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E4%B8%8E%E5%AF%B9%E8%AF%9D%E7%AE%A1%E7%90%86/" title="03 消息类型与对话管理">03 消息类型与对话管理</a><time datetime="2026-04-07T03:31:12.000Z" title="发表于 2026-04-07 11:31:12">2026-04-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/LangChain-study/02%20-%20Prompt%20Templates%20%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF/" title="02 提示词模板">02 提示词模板</a><time datetime="2026-04-02T10:11:06.000Z" title="发表于 2026-04-02 18:11:06">2026-04-02</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By lxbing</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        loader: {
+          load: [
+            // Four font extension packages (optional)
+            //- '[tex]/bbm',
+            //- '[tex]/bboldx',
+            //- '[tex]/dsfont',
+            '[tex]/mhchem'
+          ],
+          paths: {
+            'mathjax-newcm': '[mathjax]/../@mathjax/mathjax-newcm-font',
+
+            //- // Four font extension packages (optional)
+            //- 'mathjax-bbm-extension': '[mathjax]/../@mathjax/mathjax-bbm-font-extension',
+            //- 'mathjax-bboldx-extension': '[mathjax]/../@mathjax/mathjax-bboldx-font-extension',
+            //- 'mathjax-dsfont-extension': '[mathjax]/../@mathjax/mathjax-dsfont-font-extension',
+            'mathjax-mhchem-extension': '[mathjax]/../@mathjax/mathjax-mhchem-font-extension'
+          }
+        },
+        output: {
+          font: 'mathjax-newcm',
+        },
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+          packages: {
+            '[+]': [
+              'mhchem'
+            ]
+          }
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          menuOptions: {
+            settings: {
+              enrich: false  // Turn off Braille and voice narration text automatic generation
+            }
+          },
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax@4.1.0/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
