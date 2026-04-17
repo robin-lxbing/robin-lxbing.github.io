@@ -1580,28 +1580,6 @@
       </tags>
   </entry>
   <entry>
-    <title>AI Agent开发</title>
-    <url>/posts/AI%20Agent%E5%BC%80%E5%8F%91/</url>
-    <content><![CDATA[<h2 id="LangChain"><a href="#LangChain" class="headerlink" title="LangChain"></a>LangChain</h2><p>现在市面上的模型多如牛毛，各种各样的模型不断出现，LangChain模型组件提供了与各种模型的集成，并为所有模型提供一<br>个精简的统一接口。<br>LangChain目前支持三种类型的模型：<strong>LLMs（大语言模型)</strong>、<strong>Chat Models(聊天模型)</strong>、<strong>Embeddings Models(嵌入模型)</strong>。</p>
-<blockquote>
-<p><strong>LLMs（大语言模型)</strong>：是技术范畴的统称，指基于大参数量、海量文本训练的Transformer架构模型，核心能力是理解和生成自然语言，<br>主要服务于文本生成场景<br><strong>Chat Models(聊天模型)</strong>：是应用范畴的细分，是专为对话场景优化的LLMS,核心能力是模拟人类对话的轮次交互，主要服务于聊天场景<br><strong>Embeddings Models(嵌入模型)</strong>：文本嵌入模型接收文本作为输入，得到文本的向量。</p>
-</blockquote>
-<p>LangChain支持的三类模型，它们的使用场景不同，输入和输出不同，开发者需要根据项目需要选择相应。</p>
-<ol>
-<li>使用LangChain调用远程大语言模型服务</li>
-</ol>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_community.llms.tongyi <span class="keyword">import</span> Tongyi</span><br><span class="line">model = Tongyi(model=<span class="string">&quot;qwen-max&quot;</span>)</span><br><span class="line"><span class="comment"># 在调用前先配置api_key</span></span><br><span class="line">res = model.invoke(<span class="built_in">input</span>=<span class="string">&quot;讲一个冷笑话&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(res)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 模型流式输出结果</span></span><br><span class="line">res = model.stream(<span class="built_in">input</span>=<span class="string">&quot;讲一个冷笑话&quot;</span>)</span><br><span class="line"><span class="keyword">for</span> chunk <span class="keyword">in</span> res:</span><br><span class="line">    <span class="built_in">print</span>(chunk, end=<span class="string">&quot;&quot;</span>, flush=<span class="literal">True</span>)</span><br></pre></td></tr></table></figure>
-
-<p>![image-20260401142113405](D:\Typora\notes\Robin’s Blog\AI Agent开发\image-20260401142113405-1775024477842-1.png)</p>
-]]></content>
-      <categories>
-        <category>ai应用</category>
-      </categories>
-      <tags>
-        <tag>ai应用开发</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>04 自定义工具</title>
     <url>/posts/LangChain-study/04%20-%20Custom%20Tools%20(%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B7%A5%E5%85%B7)/</url>
     <content><![CDATA[<h1 id="04-Custom-Tools-自定义工具"><a href="#04-Custom-Tools-自定义工具" class="headerlink" title="04 - Custom Tools (自定义工具)"></a>04 - Custom Tools (自定义工具)</h1><h2 id="核心概念"><a href="#核心概念" class="headerlink" title="核心概念"></a>核心概念</h2><p><strong>工具 (Tool) &#x3D; 给 AI 的函数</strong></p>
